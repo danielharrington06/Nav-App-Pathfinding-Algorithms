@@ -46,22 +46,23 @@ static double[] DijkstrasAlgorithm(double[,] matrix, int startNodeIndex) {
         // iterate over other nodes
         for (int j = 0; j < numColumns; j++) {
             // if already visited node, skip
-            if (visitedNodes[j]) {
-                continue;
-            }
+            if (visitedNodes[j] || currentNode == j) {}
             //if unvisited, consider
             else {
                 //distance from currentNode to the other node
                 outgoingDist = matrix[currentNode, j];
 
                 // this distance may be 0, so no direct connection or it is itself
-                if (outgoingDist == 0) {
-                    continue;
-                }
+                if (outgoingDist == 0) {}
                 // if directly connected, evaluate
                 else {
                     // is a shorter path
                     if (distanceToNode + outgoingDist < dijkstraDistances[j]) {
+                        // so update dijkstraDistances
+                        dijkstraDistances[j] = distanceToNode + outgoingDist;
+                    }
+                    // where no path to node has been found yet
+                    else if (dijkstraDistances[j] == 0) {
                         // so update dijkstraDistances
                         dijkstraDistances[j] = distanceToNode + outgoingDist;
                     }
@@ -74,7 +75,7 @@ static double[] DijkstrasAlgorithm(double[,] matrix, int startNodeIndex) {
         lowestValIndex = -1;
         for (int k = 0; k < numColumns; k++) {
             if (visitedNodes[k] == false) {
-                if (dijkstraDistances[k] < lowestVal) {
+                if (dijkstraDistances[k] < lowestVal && dijkstraDistances[k] != 0) {
                     lowestVal = dijkstraDistances[k];
                     lowestValIndex = k;
                 }
@@ -89,3 +90,36 @@ static double[] DijkstrasAlgorithm(double[,] matrix, int startNodeIndex) {
 double [,] matrixJ;
 int startNode;
 double [] listJ;
+
+
+matrixJ = new double[6,6]
+{
+    {0, 0, 0, 4, 5, 0},
+    {0, 0, 2, 4, 6, 8},
+    {0, 2, 0, 0, 3, 12},
+    {4, 4, 0, 0, 0, 3},
+    {5, 6, 2, 0, 0, 0},
+    {0, 8, 12, 3, 0, 0}
+};
+
+startNode = 4;
+
+listJ = new double[] {5, 4, 2, 8, 0, 11};
+
+double[] listJResult = DijkstrasAlgorithm(matrixJ, startNode);
+
+for (int h = 0; h < listJResult.Length; h++) {
+    Console.Write(listJResult[h]);
+    if (h != listJResult.Length - 1) {
+        Console.Write(", ");
+    }
+}
+
+Console.WriteLine();
+
+if (listJ.SequenceEqual(listJResult)) {
+    Console.WriteLine("Successful Test");
+}
+else {
+    Console.WriteLine("Unsuccesful Test");
+}
