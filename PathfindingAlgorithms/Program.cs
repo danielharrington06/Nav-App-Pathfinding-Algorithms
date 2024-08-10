@@ -6,7 +6,7 @@ This program holds Dijkstra's Algorithm and finds the shortest path between a st
 A distance of 0 in the matrix either means that the nodes are not directly connected or that the edge would be from 
 one node to the same, and an edge of this type does not exist in the database.
  */
-static float[] DijkstrasAlgorithm(float[,] matrix, int startNode) {
+static double[] DijkstrasAlgorithm(double[,] matrix, int startNodeIndex) {
     // validate the matrix input by ensuring that it is n x n
     // achieved by finding number of rows and columns
     int numColumns = matrix.GetLength(0);
@@ -22,19 +22,21 @@ static float[] DijkstrasAlgorithm(float[,] matrix, int startNode) {
     // to keep track of visited locations to not go to a previously visited node and to stay efficient
     bool[] visitedNodes = new bool[numberOfNodes];
     // this holds the working (then finalised) distances from the start node to each other node
-    float[] dijkstraDistances = new float[numberOfNodes];
+    double[] dijkstraDistances = new double[numberOfNodes];
 
     // initial setup
     for (int i = 0; i < numberOfNodes; i++) {
         visitedNodes[i] = false;
-        dijkstraDistances[i] = matrix[startNode, i];
+        dijkstraDistances[i] = matrix[startNodeIndex, i];
     }
 
-    int currentNode = startNode;
+    int currentNode = startNodeIndex;
 
     // setup variables before while loop
-    float distanceToNode;
-    float outgoingDist;
+    double distanceToNode;
+    double outgoingDist;
+    double lowestVal;
+    int lowestValIndex;
 
     // repeats as long as there is at least one unvisited node
     while (visitedNodes.Contains(false)) {
@@ -68,8 +70,8 @@ static float[] DijkstrasAlgorithm(float[,] matrix, int startNode) {
         }
         
         // now select next node
-        float lowestVal = float.MaxValue;
-        int lowestValIndex = -1;
+        lowestVal = double.MaxValue;
+        lowestValIndex = -1;
         for (int k = 0; k < numColumns; k++) {
             if (visitedNodes[k] == false) {
                 if (dijkstraDistances[k] < lowestVal) {
@@ -84,3 +86,6 @@ static float[] DijkstrasAlgorithm(float[,] matrix, int startNode) {
     return dijkstraDistances;
 }
 
+double [,] matrixJ;
+int startNode;
+double [] listJ;

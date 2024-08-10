@@ -12,3 +12,4 @@ c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source
 c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.pdb
 c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.genruntimeconfig.cache
 c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\ref\PathfindingAlgorithms.dll
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.sourcelink.json
