@@ -1,0 +1,14 @@
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\bin\Debug\net8.0\PathfindingAlgorithms.exe
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\bin\Debug\net8.0\PathfindingAlgorithms.deps.json
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\bin\Debug\net8.0\PathfindingAlgorithms.runtimeconfig.json
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\bin\Debug\net8.0\PathfindingAlgorithms.dll
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\bin\Debug\net8.0\PathfindingAlgorithms.pdb
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.AssemblyInfoInputs.cache
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.AssemblyInfo.cs
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.csproj.CoreCompileInputs.cache
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.dll
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\refint\PathfindingAlgorithms.dll
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.pdb
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\PathfindingAlgorithms.genruntimeconfig.cache
+c:\Users\danie\Documents\School Y12 - Y13\Computer Science\3 - Coursework\Source Code\Nav-App-Pathfinding-Algorithms\PathfindingAlgorithms\obj\Debug\net8.0\ref\PathfindingAlgorithms.dll
