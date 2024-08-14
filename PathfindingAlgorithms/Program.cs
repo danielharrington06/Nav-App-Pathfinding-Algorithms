@@ -59,13 +59,11 @@ public class DistanceMatrix
         int numColumns = distDistMatrix.GetLength(1);
         // validate the matrix input by ensuring that it is n x n
         // achieved by finding number of rows and columns
-        if (numRows != numColumns)
-        {
+        if (numRows != numColumns) {
             throw new FormatException($"The input '{distDistMatrix}' does not have an equal number of rows as columns.");
         }
         // validate the second matrix input by ensuring that it is also n x n
-        else if (distDistMatrix.GetLength(0) != numColumns || infoMatrix.GetLength(1) != numRows)
-        {
+        else if (distDistMatrix.GetLength(0) != numColumns || infoMatrix.GetLength(1) != numRows) {
             throw new FormatException($"The inputs '{distDistMatrix}' and '{infoMatrix}' do not have equal dimensions.");
         }
 
@@ -80,10 +78,8 @@ public class DistanceMatrix
         // initialise returned matrix
         double[,] timeDistMatrix = new double[numRows, numColumns];
 
-        for (int rowNum = 0; rowNum < numberOfNodes; rowNum++)
-        {
-            for (int colNum = 0; colNum < numberOfNodes; colNum++)
-            {
+        for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
+            for (int colNum = 0; colNum < numberOfNodes; colNum++) {
                 distance = distDistMatrix[rowNum, colNum];
                 info = infoMatrix[rowNum, colNum];
                 time = EstimateTimeFromDistance(distance, info);
