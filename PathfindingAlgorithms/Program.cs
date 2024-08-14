@@ -2,22 +2,57 @@
 using System.Numerics;
 
 /**
-This program holds Dijkstra's Algorithm and finds the shortest path between a start node and every other node.
+This functions configures a time distance matrix so that pathfinding can be carried out.
+It takes two matrices - the first is a distance distance matrix representing the connections between
+nodes on a graph in metres, and the second represnting what type of path each edge is.
+It then estimates time for each non 0 edge in the matrix, also considering the time of day if this is enabled
+in the user settings and database settings.
+*/
+static double[,] ConfigureTimeDistMatrix(double[,] distDistMatrix, char[,] infoMatrix) {
+    
+    int numRows = distDistMatrix.GetLength(0);
+    int numColumns = distDistMatrix.GetLength(1);
+
+    // validate the matrix input by ensuring that it is n x n
+    // achieved by finding number of rows and columns
+    if (numRows != numColumns) {
+        throw new FormatException($"The input '{distDistMatrix}' does not have an equal number of rows as columns.");
+    }
+    // validate the second matrix input by ensuring that it is also n x n
+    else if (distDistMatrix.GetLength(0) != numColumns || infoMatrix.GetLength(1) != numRows) {
+        throw new FormatException($"The inputs '{distDistMatrix}' and '{infoMatrix}' do not have equal dimensions.");
+    }
+
+    //provided that itis n x n
+    int numberOfNodes = numRows;
+    
+    double[,] timeDistMatrix = new double[numRows, numColumns];
+    return timeDistMatrix;
+}
+
+
+
+
+
+/**
+This function carries out Dijkstra's Algorithm to finds the shortest path between a start node and every other node.
+It takes the matrix and a node to start the pathfinding from.
 A distance of 0 in the matrix either means that the nodes are not directly connected or that the edge would be from 
 one node to the same, and an edge of this type does not exist in the database.
  */
 static double[] DijkstrasAlgorithm(double[,] matrix, int startNodeIndex) {
+    
+    int numRows = matrix.GetLength(0);
+    int numColumns = matrix.GetLength(1);
+
     // validate the matrix input by ensuring that it is n x n
     // achieved by finding number of rows and columns
-    int numColumns = matrix.GetLength(0);
-    int numRows = matrix.GetLength(1);
-
-    if (numColumns != numRows) {
+    if (numRows != numColumns) {
         throw new FormatException($"The input '{matrix}' does not have an equal number of rows as columns.");
     }
     
     // provided that it is n x n
-    int numberOfNodes = numColumns;
+    int numberOfNodes = numRows;
 
     // to keep track of visited locations to not go to a previously visited node and to stay efficient
     bool[] visitedNodes = new bool[numberOfNodes];
