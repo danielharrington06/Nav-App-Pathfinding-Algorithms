@@ -30,7 +30,7 @@ public class DistanceMatrix
 
         // now check settings
         // for now, just set values here, later take from database
-        useTimeForCalculationUserSetting = false; // sourced from user settings
+        useTimeForCalculationUserSetting = true; // sourced from user settings
         canUseTimeForCalculationDBSetting = true; // sourced from DB settings
 
         // if DB sets it as false, then it is false, otherwise, follow user's settings
@@ -79,9 +79,12 @@ public class DistanceMatrix
         for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
             for (int colNum = 0; colNum < numberOfNodes; colNum++) {
                 distance = distDistMatrix[rowNum, colNum];
-                info = infoMatrix[rowNum, colNum];
-                time = EstimateTimeFromDistance(distance, info);
-                timeDistMatrix[rowNum, colNum] = time;
+                if (distance > 0) {
+                    info = infoMatrix[rowNum, colNum];
+                    time = EstimateTimeFromDistance(distance, info);
+                    timeDistMatrix[rowNum, colNum] = time;
+                }
+                
             }
         }
         return timeDistMatrix;
@@ -120,7 +123,7 @@ public class DistanceMatrix
                 }
                 else {
                     realVelocity = insideVelocity; // not necessarily inside, but if commonly congested,
-                                                    // then likely speed of inside
+                                                    // then likely will be the speed of inside
                 }
                 break;
             case 'L': // lift - distance in DB chosen as number of seconds lift takes
@@ -128,11 +131,11 @@ public class DistanceMatrix
                 break;
             default:
                 realVelocity = defaultVelocity;
-                Console.WriteLine($"Invalid info code for value with distance '{distance}'");
+                Console.WriteLine($"Invalid info code '{info}'for value with distance '{distance}'");
                 break;
         }
         time = distance/realVelocity;
-        return time;
+        return Math.Round(time, 1);
     }
 
     /**
@@ -146,11 +149,11 @@ public class DistanceMatrix
         // later source from database
         List<TimeSpan> congestionTimes =
         [
-            new TimeSpan(11,0,0),
-            new TimeSpan(11,20,0),
-            new TimeSpan(13,20,0),
-            new TimeSpan(14,0,0),
-            new TimeSpan(15,0,0),
+            new TimeSpan(11,0,0),   // 11:00
+            new TimeSpan(11,20,0),  // 11:20
+            new TimeSpan(13,20,0),  // 13:20
+            new TimeSpan(14,0,0),   // 14:00
+            new TimeSpan(15,0,0),   // 15:00
         ];
 
         // later source from database
@@ -167,8 +170,8 @@ public class DistanceMatrix
             }
         }
 
-        return isNearCongestionTime;
-    } 
+        return isNearCongestionTime; //needs to be changed back once tested
+    }
 }
 
 
@@ -307,7 +310,7 @@ internal class Program
             {0, 0, 3, 0, 0, 0, 0, 0, 0, 2},
             {0, 0, 1, 6, 6, 0, 0, 1, 0, 8},
             {0, 0, 0, 0, 4, 0, 1, 0, 0, 10},
-            {7, 6, 16, 0, 0, 0, 0, 0, 0, 0},
+            {7, 6, 0, 16, 0, 0, 0, 0, 0, 0},
             {0, 0, 0, 0, 0, 2, 8, 10, 0, 0}
         };
 
@@ -352,6 +355,71 @@ internal class Program
             {10.2, 30.1, 65.1, 42.0, 32.3, 24.3, 34.9, 21.5, 4.5, 41.4, 38.1, 33.7, 34.4, 40.2, 14.9, 0.0}
         };
 
+        // DD Test 1
+        char[,] matrixB = new char[10,10] {
+            {'0', '0', 'O', 'I', '0', '0', '0', '0', 'I', '0'}, 
+            {'0', '0', '0', 'S', 'O', '0', '0', '0', 'I', '0'}, 
+            {'O', '0', '0', 'I', '0', 'I', 'C', '0', '0', '0'}, 
+            {'I', 'S', 'I', '0', '0', '0', 'S', '0', 'I', '0'}, 
+            {'0', 'O', '0', '0', '0', '0', 'I', 'I', '0', '0'}, 
+            {'0', '0', 'I', '0', '0', '0', '0', '0', '0', 'C'}, 
+            {'0', '0', 'C', 'S', 'I', '0', '0', 'C', '0', 'I'}, 
+            {'0', '0', '0', '0', 'I', '0', 'C', '0', '0', 'I'}, 
+            {'I', 'I', '0', 'I', '0', '0', '0', '0', '0', '0'}, 
+            {'0', '0', '0', '0', '0', 'C', 'I', 'I', '0', '0'}
+        };
+
+        double[,] matrixC = new double[10,10] {
+            {0, 0, 7.7, 4.2, 0, 0, 0, 0, 5.8, 0}, 
+            {0, 0, 0, 8, 2.3, 0, 0, 0, 5, 0}, 
+            {7.7, 0, 0, 3.3, 0, 2.5, 0.8, 0, 0, 0}, 
+            {4.2, 8, 3.3, 0, 0, 0, 6, 0, 13.3, 0}, 
+            {0, 2.3, 0, 0, 0, 0, 5, 3.3, 0, 0}, 
+            {0, 0, 2.5, 0, 0, 0, 0, 0, 0, 1.7}, 
+            {0, 0, 0.8, 6, 5, 0, 0, 0.8, 0, 6.7}, 
+            {0, 0, 0, 0, 3.3, 0, 0.8, 0, 0, 8.3}, 
+            {5.8, 5, 0, 13.3, 0, 0, 0, 0, 0, 0}, 
+            {0, 0, 0, 0, 0, 1.7, 6.7, 8.3, 0, 0},
+        };
+
+        char[,] matrixE = new char[16,16] {
+            {'0', '0', '0', '0', 'O', 'S', 'I', 'O', 'O', '0', 'I', '0', '0', '0', '0', '0'}, 
+            {'0', '0', '0', 'C', '0', '0', 'I', 'L', '0', 'S', 'O', 'I', '0', '0', 'I', 'O'}, 
+            {'0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'I', 'I', '0', 'O', 'O', '0'}, 
+            {'0', 'C', '0', '0', '0', '0', 'C', '0', 'I', 'I', '0', '0', '0', 'O', 'O', '0'}, 
+            {'O', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'I', 'C', 'I', '0', '0'}, 
+            {'S', '0', '0', '0', '0', '0', 'O', '0', 'S', '0', '0', 'O', '0', '0', '0', '0'}, 
+            {'0', '0', '0', 'C', '0', 'O', '0', '0', 'I', '0', 'O', 'O', '0', 'O', 'O', 'I'}, 
+            {'O', 'L', '0', '0', '0', '0', '0', '0', '0', 'L', '0', 'I', 'I', '0', 'I', '0'}, 
+            {'O', '0', '0', 'I', '0', '0', 'I', '0', '0', '0', '0', '0', '0', '0', '0', 'S'}, 
+            {'0', '0', '0', '0', '0', '0', '0', 'L', '0', '0', 'I', 'I', 'O', '0', '0', '0'}, 
+            {'0', 'O', '0', '0', '0', '0', 'O', '0', '0', 'I', '0', 'S', 'I', '0', '0', '0'}, 
+            {'0', 'I', 'I', '0', 'I', 'O', '0', '0', '0', '0', 'S', '0', '0', '0', 'I', '0'}, 
+            {'0', '0', '0', '0', '0', '0', '0', '0', '0', 'O', 'I', '0', '0', '0', '0', 'I'}, 
+            {'0', '0', 'O', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', 'I', '0'}, 
+            {'0', 'I', '0', '0', '0', '0', '0', 'I', '0', '0', '0', '0', '0', 'I', '0', 'S'}, 
+            {'0', '0', '0', '0', '0', '0', 'I', '0', 'S', '0', '0', '0', '0', '0', 'S', '0'}
+        };
+        
+        double[,] matrixF = new double[16,16] {
+            {0, 0, 0, 0, 17, 28.2, 31.7, 8.7, 4.4, 0, 26.6, 0, 0, 0, 0, 0}, 
+            {0, 0, 0, 48, 0, 0, 4, 8.6, 0, 72.8, 29, 18.7, 0, 0, 27.7, 15.6}, 
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.3, 26.2, 0, 20, 11.1, 0}, 
+            {0, 48, 0, 0, 0, 0, 82.2, 0, 31.2, 27.3, 0, 0, 0, 7.7, 15.3, 0}, 
+            {17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7.5, 60.2, 28.8, 0, 0}, 
+            {28.2, 0, 0, 0, 0, 0, 23.6, 0, 47.4, 0, 0, 7.2, 0, 0, 0, 0}, 
+            {0, 0, 0, 82.2, 0, 23.6, 0, 0, 28.8, 0, 6.9, 0.9, 0, 25.3, 5.2, 30.7}, 
+            {8.7, 8.6, 0, 0, 0, 0, 0, 0, 0, 19.9, 0, 24.3, 10.8, 0, 17.6, 0}, 
+            {4.4, 0, 0, 31.2, 0, 0, 28.8, 0, 0, 0, 0, 0, 0, 0, 0, 9}, 
+            {0, 0, 0, 0, 0, 0, 0, 19.9, 0, 0, 4, 23.7, 19.2, 0, 0, 0}, 
+            {0, 29, 0, 0, 0, 0, 6.9, 0, 0, 4, 0, 13.8, 3.1, 0, 0, 0}, 
+            {0, 18.7, 26.2, 0, 7.5, 7.2, 0, 0, 0, 0, 13.8, 0, 0, 0, 6.5, 0}, 
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 19.2, 3.1, 0, 0, 0, 0, 23.2}, 
+            {0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21.1, 0}, 
+            {0, 27.7, 0, 0, 0, 0, 0, 17.6, 0, 0, 0, 0, 0, 21.1, 0, 29.8}, 
+            {0, 0, 0, 0, 0, 0, 30.7, 0, 9, 0, 0, 0, 0, 0, 29.8, 0}, 
+        };
+
         /* 
         // start Node
         int startNode = 5;
@@ -374,7 +442,7 @@ internal class Program
             Console.WriteLine("Unsuccesful Test");
         } */
 
-        double[,] matrixResult = new double[16, 16]; //result matrix
+        /* double[,] matrixResult = new double[16, 16]; //result matrix
         double[] tempList = new double[16]; //a list to grab results of each run of dijkstras
 
         for (int node = 0; node < matrixD.GetLength(0); node++)
@@ -416,6 +484,45 @@ internal class Program
         else
         {
             Console.WriteLine("Unsuccessful Test");
+        }*/
+        DistanceMatrix distmat = new DistanceMatrix();
+        double[,] matrixResult = distmat.ConfigureTimeDistMatrix(matrixD, matrixE);
+        for (int row = 0; row < matrixResult.GetLength(0); row++)
+        {
+            for (int col = 0; col < matrixResult.GetLength(1); col++)
+            {
+                Console.Write(matrixResult[row, col]); //also output the value
+                if (col != matrixResult.Length - 1)
+                {
+                    Console.Write(", ");
+                }
+            }
+            Console.WriteLine();
         }
-    }
+        Console.WriteLine();
+
+        bool areEqual = true;
+        //no built in method to compare two matrices, so i've had to implement my own
+
+        for (int row = 0; row < matrixD.GetLength(0); row++)
+        {
+            for (int col = 0; col < matrixD.GetLength(1); col++)
+            {
+                if (matrixF[row, col] != matrixResult[row, col])
+                {
+                    areEqual = false;
+                }
+            }
+        }
+
+        if (areEqual)
+        {
+            Console.WriteLine("Successful Test");
+        }
+        else
+        {
+            Console.WriteLine("Unsuccessful Test");
+        }
+
+    } 
 }
