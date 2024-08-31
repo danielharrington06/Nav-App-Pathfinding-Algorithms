@@ -172,6 +172,57 @@ public class DistanceMatrix
 
         return isNearCongestionTime; //needs to be changed back once tested
     }
+
+    /**
+    This function is used to adjust the time distance matrix so that if step-free access is selected
+    then stairs are not considered when pathfinding. The opposite is true so that people who can use
+    stairs get directed through them.
+    It iteratively looks through the info matrix for either S or L and adjusts the matrix correctly.
+    */
+    public double[,] AdjustStairsLifts(double[,] timeDistMatrix, char[,] infoMatrix) {
+
+        int numRows = timeDistMatrix.GetLength(0);
+        int numColumns = timeDistMatrix.GetLength(1);
+        // validate the matrix input by ensuring that it is n x n
+        // achieved by finding number of rows and columns
+        if (numRows != numColumns) {
+            throw new FormatException($"The input '{timeDistMatrix}' does not have an equal number of rows as columns.");
+        }
+        // validate the second matrix input by ensuring that it is also n x n
+        else if (timeDistMatrix.GetLength(0) != numColumns || infoMatrix.GetLength(1) != numRows) {
+            throw new FormatException($"The inputs '{timeDistMatrix}' and '{infoMatrix}' do not have equal dimensions.");
+        }
+
+        // provided that it is n x n
+        int numberOfNodes = numRows;
+
+        //get setting
+        bool stepFreeAccess = false; // later get this from other game object
+
+        //saves computation time only checking this once instead of for each iteration
+        if (stepFreeAccess) { // so get rid of edges for stairs
+            for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
+                for (int colNum = 0; colNum < numberOfNodes; colNum++) {
+                    if (infoMatrix[rowNum, colNum] == 'S') {
+                        timeDistMatrix[rowNum, colNum] = 0;
+                    }
+                }
+            }
+        }
+        
+        else { // so get rid of edges for lifts
+            for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
+                for (int colNum = 0; colNum < numberOfNodes; colNum++) {
+                    if (infoMatrix[rowNum, colNum] == 'L') {
+                        timeDistMatrix[rowNum, colNum] = 0;
+                    }
+                }
+            }
+        }
+        
+        return timeDistMatrix;
+
+    }
 }
 
 
@@ -179,10 +230,13 @@ public class Dijkstra
 {
 
     // fields
+    private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
 
 
     // constructors
-    public Dijkstra(){}
+    public Dijkstra(){
+        timeSecsModifier = 0;
+    }
 
 
     // methods
@@ -269,12 +323,80 @@ public class Dijkstra
         }
         return dijkstraDistances;
     }
+
+    /**
+    This function takes a node index and a list (the resulting dijkstra distances)
+    and returns the value at the index specified. Most of the hard work has already
+    been done for the estimation of time.
+    */
+    public double EstimateTime(double[] dijkstraDistances, int targetNode) {
+        if (targetNode >= dijkstraDistances.Length) {
+            throw new FormatException($"List index '{targetNode}' out of range.");
+        }
+        double timeInSecs = dijkstraDistances[targetNode];
+        timeInSecs += timeSecsModifier; // at 0 for testing, will be adjusted later
+        return timeInSecs;
+    }
+
+    /**
+    This function takes seconds and returns that in hours minutes and seconds.
+    */
+    public TimeSpan ConvertSecsToTimeFormat(double timeInSecs) {
+        TimeSpan time;
+        int intTimeInSecs = Convert.ToInt32(timeInSecs); // can only be integer seconds
+        // now manually use mod function to find hours, mins and secs
+        // hours
+        int hours = intTimeInSecs % (60*60);
+        if (hours > 0) {
+            intTimeInSecs -= hours*60*60;
+        }
+        // minutes
+        int minutes = intTimeInSecs % 60;
+        if (minutes > 0) {
+            intTimeInSecs -= minutes*60;
+        }
+        // seconds are just intTimeInSecs
+        time = new TimeSpan(hours, minutes, intTimeInSecs);
+
+        return time;
+    }
 }
 
 internal class Program
 {
     private static void Main(string[] args)
     {
+
+        /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
+            bool areEqual = true;
+            // Check if both arrays are null or reference the same array
+            if (ReferenceEquals(matrix1, matrix2)) areEqual = true;
+
+            // Check if either of the arrays is null
+            if (matrix1 == null || matrix2 == null) areEqual = false;
+
+            // Check dimensions
+            if (matrix1.GetLength(0) != matrix2.GetLength(0) || 
+                matrix1.GetLength(1) != matrix2.GetLength(1))
+            {
+                areEqual = false;
+            }
+
+            // Compare each element
+            for (int i = 0; i < matrix1.GetLength(0); i++)
+            {
+                for (int j = 0; j < matrix1.GetLength(1); j++)
+                {
+                    if (!matrix1[i, j].Equals(matrix2[i, j]))
+                    {
+                        areEqual = false;
+                        Console.WriteLine(i.ToString() +","+ j.ToString());
+                    }
+                }
+            }
+
+            return areEqual;
+        } */
         
         // DD Test 8
         double[,] matrixJ = new double[6, 6] {
@@ -300,7 +422,7 @@ internal class Program
 
         double[] listK = new double[] { 28.0, 0, 15.6, 18.7, 56.4, 29.7 };
 
-        //DD Test 10
+        // DD Test 10
         double[,] matrixA = new double[10, 10] {
             {0, 0, 10, 5, 0, 0, 0, 0, 7, 0},
             {0, 0, 0, 8, 3, 0, 0, 0, 6, 0},
@@ -316,7 +438,7 @@ internal class Program
 
         double[] listA = new double[10] { 12, 12, 3, 7, 9, 0, 4, 5, 18, 2 };
 
-        //DD Test 11
+        // DD Test 11
         double[,] matrixD = new double[16, 16] {
             {0, 0, 0, 0, 22.1, 14.1, 38.0, 11.3, 5.7, 0, 31.9, 0, 0, 0, 0, 0},
             {0, 0, 0, 19.2, 0, 0, 4.8, 8.6, 0, 36.4, 37.7, 22.4, 0, 0, 33.2, 20.3},
@@ -382,6 +504,7 @@ internal class Program
             {0, 0, 0, 0, 0, 1.7, 6.7, 8.3, 0, 0},
         };
 
+        // DD Test 2
         char[,] matrixE = new char[16,16] {
             {'0', '0', '0', '0', 'O', 'S', 'I', 'O', 'O', '0', 'I', '0', '0', '0', '0', '0'}, 
             {'0', '0', '0', 'C', '0', '0', 'I', 'L', '0', 'S', 'O', 'I', '0', '0', 'I', 'O'}, 
@@ -418,6 +541,46 @@ internal class Program
             {0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21.1, 0}, 
             {0, 27.7, 0, 0, 0, 0, 0, 17.6, 0, 0, 0, 0, 0, 21.1, 0, 29.8}, 
             {0, 0, 0, 0, 0, 0, 30.7, 0, 9, 0, 0, 0, 0, 0, 29.8, 0}, 
+        };
+
+        // DD Test 4
+        double [,] matrixG = new double[16,16] {
+            {0, 0, 0, 0, 22.1, 0, 38.0, 11.3, 5.7, 0, 31.9, 0, 0, 0, 0, 0}, 
+            {0, 0, 0, 19.2, 0, 0, 4.8, 8.6, 0, 0, 37.7, 22.4, 0, 0, 33.2, 20.3}, 
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.0, 31.4, 0, 26.0, 14.4, 0}, 
+            {0, 19.2, 0, 0, 0, 0, 32.9, 0, 37.5, 32.7, 0, 0, 0, 10.0, 19.9, 0}, 
+            {22.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9.0, 24.1, 34.6, 0, 0}, 
+            {0, 0, 0, 0, 0, 0, 30.7, 0, 0, 0, 0, 9.4, 0, 0, 0, 0}, 
+            {0, 0, 0, 32.9, 0, 30.7, 0, 0, 34.5, 0, 9.0, 1.2, 0, 32.9, 6.8, 36.8}, 
+            {11.3, 8.6, 0, 0, 0, 0, 0, 0, 0, 19.9, 0, 29.2, 12.9, 0, 21.1, 0}, 
+            {5.7, 0, 0, 37.5, 0, 0, 34.5, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+            {0, 0, 0, 0, 0, 0, 0, 19.9, 0, 0, 4.8, 28.4, 25.0, 0, 0, 0}, 
+            {0, 37.7, 0, 0, 0, 0, 9.0, 0, 0, 4.8, 0, 0, 3.7, 0, 0, 0}, 
+            {0, 22.4, 31.4, 0, 9.0, 9.4, 0, 0, 0, 0, 0, 0, 0, 0, 7.8, 0}, 
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 25.0, 3.7, 0, 0, 0, 0, 27.9}, 
+            {0, 0, 26.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25.3, 0}, 
+            {0, 33.2, 0, 0, 0, 0, 0, 21.1, 0, 0, 0, 0, 0, 25.3, 0, 0}, 
+            {0, 0, 0, 0, 0, 0, 36.8, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+        };
+
+        //DD Test 5
+        double [,] matrixH = new double[16,16] {
+            {0, 0, 0, 0, 22.1, 14.1, 38.0, 11.3, 5.7, 0, 31.9, 0, 0, 0, 0, 0}, 
+            {0, 0, 0, 19.2, 0, 0, 4.8, 0, 0, 36.4, 37.7, 22.4, 0, 0, 33.2, 20.3}, 
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.0, 31.4, 0, 26.0, 14.4, 0}, 
+            {0, 19.2, 0, 0, 0, 0, 32.9, 0, 37.5, 32.7, 0, 0, 0, 10.0, 19.9, 0}, 
+            {22.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9.0, 24.1, 34.6, 0, 0}, 
+            {14.1, 0, 0, 0, 0, 0, 30.7, 0, 23.7, 0, 0, 9.4, 0, 0, 0, 0}, 
+            {0, 0, 0, 32.9, 0, 30.7, 0, 0, 34.5, 0, 9.0, 1.2, 0, 32.9, 6.8, 36.8}, 
+            {11.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29.2, 12.9, 0, 21.1, 0}, 
+            {5.7, 0, 0, 37.5, 0, 0, 34.5, 0, 0, 0, 0, 0, 0, 0, 0, 4.5}, 
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.8, 28.4, 25.0, 0, 0, 0}, 
+            {0, 37.7, 0, 0, 0, 0, 9.0, 0, 0, 4.8, 0, 6.9, 3.7, 0, 0, 0}, 
+            {0, 22.4, 31.4, 0, 9.0, 9.4, 0, 0, 0, 0, 6.9, 0, 0, 0, 7.8, 0}, 
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 25.0, 3.7, 0, 0, 0, 0, 27.9}, 
+            {0, 0, 26.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25.3, 0}, 
+            {0, 33.2, 0, 0, 0, 0, 0, 21.1, 0, 0, 0, 0, 0, 25.3, 0, 14.9}, 
+            {0, 0, 0, 0, 0, 0, 36.8, 0, 4.5, 0, 0, 0, 0, 0, 14.9, 0}
         };
 
         /* 
@@ -485,7 +648,7 @@ internal class Program
         {
             Console.WriteLine("Unsuccessful Test");
         }*/
-        DistanceMatrix distmat = new DistanceMatrix();
+        /* DistanceMatrix distmat = new DistanceMatrix();
         double[,] matrixResult = distmat.ConfigureTimeDistMatrix(matrixD, matrixE);
         for (int row = 0; row < matrixResult.GetLength(0); row++)
         {
@@ -522,7 +685,34 @@ internal class Program
         else
         {
             Console.WriteLine("Unsuccessful Test");
-        }
+        } */
 
+        /* DistanceMatrix distmat = new DistanceMatrix();
+        double[,] matrixResult = distmat.AdjustStairsLifts(matrixD, matrixE);
+        for (int row = 0; row < matrixResult.GetLength(0); row++)
+        {
+            for (int col = 0; col < matrixResult.GetLength(1); col++)
+            {
+                Console.Write(matrixResult[row, col]); //also output the value
+                if (col != matrixResult.Length - 1)
+                {
+                    Console.Write(", ");
+                }
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine();
+
+        if (MatrixCheckEqual(matrixResult, matrixH)) {
+            Console.WriteLine("Successful Test");
+        }
+        else {
+            Console.WriteLine("Unsuccessful Test");
+        } */
+
+        Dijkstra dijk = new Dijkstra();
+        TimeSpan time = dijk.ConvertSecsToTimeFormat(71);
+        string formatted = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",time);
+        Console.WriteLine(formatted);
     } 
 }
