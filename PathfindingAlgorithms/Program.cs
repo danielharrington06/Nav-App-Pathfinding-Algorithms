@@ -343,15 +343,21 @@ public class Dijkstra
     */
     public TimeSpan ConvertSecsToTimeFormat(double timeInSecs) {
         TimeSpan time;
+        
+        // throw error if time in secs is negative
+        if (timeInSecs < 0) {
+            throw new ArgumentOutOfRangeException(nameof(timeInSecs), "The value cannot be negative.");
+        }
+
         int intTimeInSecs = Convert.ToInt32(timeInSecs); // can only be integer seconds
         // now manually use mod function to find hours, mins and secs
         // hours
-        int hours = intTimeInSecs % (60*60);
+        int hours = intTimeInSecs / (60*60);
         if (hours > 0) {
             intTimeInSecs -= hours*60*60;
         }
         // minutes
-        int minutes = intTimeInSecs % 60;
+        int minutes = intTimeInSecs / 60;
         if (minutes > 0) {
             intTimeInSecs -= minutes*60;
         }
@@ -711,7 +717,7 @@ internal class Program
         } */
 
         Dijkstra dijk = new Dijkstra();
-        TimeSpan time = dijk.ConvertSecsToTimeFormat(71);
+        TimeSpan time = dijk.ConvertSecsToTimeFormat(-1);
         string formatted = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",time);
         Console.WriteLine(formatted);
     } 
