@@ -841,10 +841,10 @@ internal class Program
         int targetNode = 4;
         int[] returnList = dijk.FindDijkstrasPath(matrixK, listK, startNode, targetNode);
         for (int i = 0; i < returnList.Length; i++) {
-            Console.WriteLine(returnList[i].ToString() + ",");
+            Console.Write(returnList[i].ToString() + ",");
         }
         Console.WriteLine();
-        if (returnList.Equals(listM)) {
+        if (returnList.SequenceEqual(listL)) {
             Console.WriteLine("Successful Test");
         }
         else {
