@@ -414,16 +414,19 @@ public class Dijkstra
             // get row currentNode from matrix
             attachedEdges.Clear();
             for (int i = 0; i < numberOfNodes; i++) {
-                attachedEdges.Add(matrix[currentNode, i]);
+                // seems wrong to have [i, currentNode]
+                // however we are backtracking so its all edges going into current node
+                attachedEdges.Add(matrix[i, currentNode]);
             }
 
             // indexes in list are part of optimal path
             possibleNodes.Clear();
             for (int i = 0; i < numberOfNodes; i++) {
                 // add optimal edges to list
-                if (dijkstraDistances[currentNode] - attachedEdges[i] == dijkstraDistances[i]) {
-                    if (!dijkstraPath.Contains(i))
-                    possibleNodes.Add(i);
+                if (Math.Round(dijkstraDistances[currentNode] - attachedEdges[i], 1) == dijkstraDistances[i]) {
+                    if (!dijkstraPath.Contains(i)){
+                        possibleNodes.Add(i);
+                    }
                 }
             }
 
@@ -697,7 +700,7 @@ internal class Program
         int[] listM = new int[5] {1, 2, 3, 0, 4};
 
         // DD Test 19
-        int[] listL = new int[5] {0, 7, 3, 1, 13};
+        int[] listL = new int[5] {0, 7, 1, 3, 13};
 
         double[] listD = new double[16] {0.0, 19.9, 54.9, 39.1, 22.1, 14.1, 24.7, 11.3, 5.7, 31.2, 27.9, 23.5, 24.2, 49.1, 25.1, 10.2};
 
@@ -845,6 +848,7 @@ internal class Program
             Console.Write(returnList[i].ToString() + ",");
         }
         Console.WriteLine();
+        
         if (returnList.SequenceEqual(listL)) {
             Console.WriteLine("Successful Test");
         }
