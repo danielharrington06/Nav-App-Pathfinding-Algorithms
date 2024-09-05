@@ -414,9 +414,7 @@ public class Dijkstra
             // get row currentNode from matrix
             attachedEdges.Clear();
             for (int i = 0; i < numberOfNodes; i++) {
-                // seems wrong to have [i, currentNode]
-                // however we are backtracking so its all edges going into current node
-                attachedEdges.Add(matrix[i, currentNode]);
+                attachedEdges.Add(matrix[currentNode, i]);
             }
 
             // indexes in list are part of optimal path
@@ -698,7 +696,10 @@ internal class Program
         // DD Test 18
         int[] listM = new int[5] {1, 2, 3, 0, 4};
 
+        // DD Test 19
         int[] listL = new int[5] {0, 7, 3, 1, 13};
+
+        double[] listD = new double[16] {0.0, 19.9, 54.9, 39.1, 22.1, 14.1, 24.7, 11.3, 5.7, 31.2, 27.9, 23.5, 24.2, 49.1, 25.1, 10.2};
 
 
         /* 
@@ -837,9 +838,9 @@ internal class Program
         Console.WriteLine(formatted2); */
 
         Dijkstra dijk = new Dijkstra();
-        int startNode = 1;
-        int targetNode = 4;
-        int[] returnList = dijk.FindDijkstrasPath(matrixK, listK, startNode, targetNode);
+        int startNode = 0;
+        int targetNode = 13;
+        int[] returnList = dijk.FindDijkstrasPath(matrixD, listD, startNode, targetNode);
         for (int i = 0; i < returnList.Length; i++) {
             Console.Write(returnList[i].ToString() + ",");
         }
@@ -850,6 +851,5 @@ internal class Program
         else {
             Console.WriteLine("Unsuccessful Test");
         }
-
     } 
 }
