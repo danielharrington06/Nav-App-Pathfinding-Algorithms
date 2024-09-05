@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Globalization;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 
 public class DistanceMatrix
@@ -381,7 +382,95 @@ public class Dijkstra
     }
 
     /**
+    This function uses the time distance matrix, dijkstra distances, start and target nodes to
+    back track and find the optimal path.
     */
+    public int[] FindDijkstrasPath(double[,] matrix, double[] dijkstraDistances, int startNode, int targetNode) {
+        
+        // first check that parameters are valid
+        //starting with startNode matching with dijkstraDistances
+        int numberOfNodes;
+
+        if (dijkstraDistances[startNode] != 0) {
+            throw new ArgumentException($"The input '{dijkstraDistances}' is not 0 at the startNode's index");
+        }
+        else if (matrix.GetLength(0) != matrix.GetLength(1)) {
+            throw new FormatException($"The input matrix is not equal in rows and columns");
+        }
+        else if (matrix.GetLength(0) == dijkstraDistances.Length) {
+            throw new ArgumentException($"The matrix and dijkstraDistances are not compatible");
+        }
+        else {
+            numberOfNodes = matrix.GetLength(0);
+        }
+
+        // use a list to store path as it will change in size
+        List<int> dijkstraPath = [targetNode];
+        int currentNode = targetNode;
+        List<double> attachedEdges = new List<double>();
+        List<int> possibleNodes = new List<int>();
+
+        while (currentNode != startNode) {
+            // get row currentNode from matrix
+            attachedEdges.Clear();
+            for (int i = 0; i < numberOfNodes; i++) {
+                // seems wrong to have [i, currentNode]
+                // however we are backtracking so its all edges going into current node
+                attachedEdges.Add(matrix[i, currentNode]);
+            }
+
+            // indexes in list are part of optimal path
+            possibleNodes.Clear();
+            for (int i = 0; i < numberOfNodes; i++) {
+                // add optimal edges to list
+                if (dijkstraDistances[currentNode] - attachedEdges[i] == dijkstraDistances[i]) {
+                    possibleNodes.Add(i);
+                }
+            }
+
+            // there is a possibility that there are multiple edges part of the dijkstra path
+            // any of them should work
+            // if there is only one, choose it
+            // if mutliple, choose a random one
+
+            if (possibleNodes.Count == 1) {
+                // consider this node as the current node
+                currentNode = possibleNodes[0];
+                // add it to the backtracked path
+                dijkstraPath.Add(currentNode);
+            }
+            else if (possibleNodes.Count > 1) {
+                //pick a random one
+                Random random = new Random();
+                int randomIndex = random.Next(0, possibleNodes.Count); // currently just 0, make random function
+                // consider this node as the current node
+                currentNode = possibleNodes[randomIndex];
+                // add it to the backtracked path
+                dijkstraPath.Add(currentNode);
+            }
+            else {
+                // no possible nodes
+                // check havent accidentally reached the start node
+                if (currentNode == startNode) {
+                    break;
+                }
+                else {
+                    throw new ApplicationException($"Program has no options for a node past '{currentNode}");
+                }
+            }
+        }
+        // now convert the list into an array and reverse it
+        // save time by storing length of list
+        int dijkstrPathLength = dijkstraPath.Count;
+        int[] dijkstraPathReturn = new int[dijkstrPathLength];
+        for (int i = 0; i < dijkstrPathLength; i++) {
+            // take last value and place it first in list
+            // - 1 - i works
+            dijkstraPathReturn[i] = dijkstraPath[dijkstrPathLength-1-i];
+        }
+
+        return dijkstraPathReturn;
+    }
 }
 
 internal class Program
