@@ -392,13 +392,13 @@ public class Dijkstra
         int numberOfNodes;
 
         if (dijkstraDistances[startNode] != 0) {
-            throw new ArgumentException($"The input '{dijkstraDistances}' is not 0 at the startNode's index");
+            throw new ArgumentException($"The input '{dijkstraDistances}' is not 0 at the startNode's index.");
         }
         else if (matrix.GetLength(0) != matrix.GetLength(1)) {
-            throw new FormatException($"The input matrix is not equal in rows and columns");
+            throw new FormatException($"The input matrix is not equal in rows and columns.");
         }
-        else if (matrix.GetLength(0) == dijkstraDistances.Length) {
-            throw new ArgumentException($"The matrix and dijkstraDistances are not compatible");
+        else if (matrix.GetLength(0) != dijkstraDistances.Length) {
+            throw new ArgumentException($"The matrix and dijkstraDistances are not compatible.");
         }
         else {
             numberOfNodes = matrix.GetLength(0);
@@ -424,6 +424,7 @@ public class Dijkstra
             for (int i = 0; i < numberOfNodes; i++) {
                 // add optimal edges to list
                 if (dijkstraDistances[currentNode] - attachedEdges[i] == dijkstraDistances[i]) {
+                    if (!dijkstraPath.Contains(i))
                     possibleNodes.Add(i);
                 }
             }
@@ -655,7 +656,7 @@ internal class Program
         };
 
         // DD Test 4
-        double [,] matrixG = new double[16,16] {
+        double[,] matrixG = new double[16,16] {
             {0, 0, 0, 0, 22.1, 0, 38.0, 11.3, 5.7, 0, 31.9, 0, 0, 0, 0, 0}, 
             {0, 0, 0, 19.2, 0, 0, 4.8, 8.6, 0, 0, 37.7, 22.4, 0, 0, 33.2, 20.3}, 
             {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.0, 31.4, 0, 26.0, 14.4, 0}, 
@@ -674,8 +675,8 @@ internal class Program
             {0, 0, 0, 0, 0, 0, 36.8, 0, 0, 0, 0, 0, 0, 0, 0, 0}
         };
 
-        //DD Test 5
-        double [,] matrixH = new double[16,16] {
+        // DD Test 5
+        double[,] matrixH = new double[16,16] {
             {0, 0, 0, 0, 22.1, 14.1, 38.0, 11.3, 5.7, 0, 31.9, 0, 0, 0, 0, 0}, 
             {0, 0, 0, 19.2, 0, 0, 4.8, 0, 0, 36.4, 37.7, 22.4, 0, 0, 33.2, 20.3}, 
             {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4.0, 31.4, 0, 26.0, 14.4, 0}, 
@@ -693,6 +694,12 @@ internal class Program
             {0, 33.2, 0, 0, 0, 0, 0, 21.1, 0, 0, 0, 0, 0, 25.3, 0, 14.9}, 
             {0, 0, 0, 0, 0, 0, 36.8, 0, 4.5, 0, 0, 0, 0, 0, 14.9, 0}
         };
+
+        // DD Test 18
+        int[] listM = new int[5] {1, 2, 3, 0, 4};
+
+        int[] listL = new int[5] {0, 7, 3, 1, 13};
+
 
         /* 
         // start Node
@@ -821,13 +828,28 @@ internal class Program
             Console.WriteLine("Unsuccessful Test");
         } */
 
-        Dijkstra dijk = new Dijkstra();
+        /* Dijkstra dijk = new Dijkstra();
         TimeSpan time = dijk.ConvertSecsToTimeFormat(125);
         string formatted1 = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",time);
         Console.WriteLine(formatted1);
         TimeSpan eta = dijk.EstimateTimeOfArrival(time);
         string formatted2 = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",eta);
-        Console.WriteLine(formatted2);
+        Console.WriteLine(formatted2); */
+
+        Dijkstra dijk = new Dijkstra();
+        int startNode = 1;
+        int targetNode = 4;
+        int[] returnList = dijk.FindDijkstrasPath(matrixK, listK, startNode, targetNode);
+        for (int i = 0; i < returnList.Length; i++) {
+            Console.WriteLine(returnList[i].ToString() + ",");
+        }
+        Console.WriteLine();
+        if (returnList.Equals(listM)) {
+            Console.WriteLine("Successful Test");
+        }
+        else {
+            Console.WriteLine("Unsuccessful Test");
+        }
 
     } 
 }
