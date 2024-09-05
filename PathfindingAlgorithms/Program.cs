@@ -330,6 +330,7 @@ public class Dijkstra
     been done for the estimation of time.
     */
     public double EstimateTime(double[] dijkstraDistances, int targetNode) {
+
         if (targetNode >= dijkstraDistances.Length) {
             throw new FormatException($"List index '{targetNode}' out of range.");
         }
@@ -342,6 +343,8 @@ public class Dijkstra
     This function takes seconds and returns that in hours minutes and seconds.
     */
     public TimeSpan ConvertSecsToTimeFormat(double timeInSecs) {
+
+        // time as timespan format
         TimeSpan time;
         
         // throw error if time in secs is negative
@@ -366,6 +369,19 @@ public class Dijkstra
 
         return time;
     }
+    /**
+    This function takes a time duration and adds it to the current time to produce the ETA.
+    */
+    public TimeSpan EstimateTimeOfArrival(TimeSpan timeDuration) {
+        // get current time of day
+        TimeSpan currentTime = DateTime.Now.TimeOfDay;
+        // add time duration
+        TimeSpan estimatedTimeOfArrival = currentTime + timeDuration;
+        return estimatedTimeOfArrival;
+    }
+
+    /**
+    */
 }
 
 internal class Program
@@ -717,8 +733,12 @@ internal class Program
         } */
 
         Dijkstra dijk = new Dijkstra();
-        TimeSpan time = dijk.ConvertSecsToTimeFormat(-1);
-        string formatted = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",time);
-        Console.WriteLine(formatted);
+        TimeSpan time = dijk.ConvertSecsToTimeFormat(125);
+        string formatted1 = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",time);
+        Console.WriteLine(formatted1);
+        TimeSpan eta = dijk.EstimateTimeOfArrival(time);
+        string formatted2 = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",eta);
+        Console.WriteLine(formatted2);
+
     } 
 }
