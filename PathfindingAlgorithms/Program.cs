@@ -62,7 +62,7 @@ public class DistanceMatrix
             throw new FormatException($"The input '{distDistMatrix}' does not have an equal number of rows as columns.");
         }
         // validate the second matrix input by ensuring that it is also n x n
-        else if (distDistMatrix.GetLength(0) != numColumns || infoMatrix.GetLength(1) != numRows) {
+        else if (infoMatrix.GetLength(0) != numRows || infoMatrix.GetLength(1) != numColumns) {
             throw new FormatException($"The inputs '{distDistMatrix}' and '{infoMatrix}' do not have equal dimensions.");
         }
 
@@ -389,7 +389,6 @@ public class Dijkstra
         
         // first check that parameters are valid
         //starting with startNode matching with dijkstraDistances
-        int numberOfNodes;
 
         if (dijkstraDistances[startNode] != 0) {
             throw new ArgumentException($"The input '{dijkstraDistances}' is not 0 at the startNode's index.");
@@ -400,9 +399,9 @@ public class Dijkstra
         else if (matrix.GetLength(0) != dijkstraDistances.Length) {
             throw new ArgumentException($"The matrix and dijkstraDistances are not compatible.");
         }
-        else {
-            numberOfNodes = matrix.GetLength(0);
-        }
+        
+        int numberOfNodes = matrix.GetLength(0);
+        
 
         // use a list to store path as it will change in size
         List<int> dijkstraPath = [targetNode];
@@ -473,6 +472,99 @@ public class Dijkstra
 
         return dijkstraPathReturn;
     }
+
+    /**
+    This function takes the dijkstraPath, distance matrix and info matrix to sum the edges 
+    from a distance matrix in order to generate a value for the total distance travelled.
+    */
+    public double CalculateDistance(int[] dijkstraPath, double[,] distDistMatrix, char[,] infoMatrix) {
+        
+        int numRows = distDistMatrix.GetLength(0);
+        int numColumns = distDistMatrix.GetLength(1);
+        // validate the matrix input by ensuring that it is n x n
+        // achieved by finding number of rows and columns
+        if (numRows != numColumns) {
+            throw new FormatException($"The input '{distDistMatrix}' does not have an equal number of rows as columns.");
+        }
+        // validate the second matrix input by ensuring that it is also n x n
+        else if (infoMatrix.GetLength(0) != numRows || infoMatrix.GetLength(1) != numColumns) {
+            throw new FormatException($"The inputs '{distDistMatrix}' and '{infoMatrix}' do not have equal dimensions.");
+        }
+
+        // provided that it is n x n
+        int numPathNodes = dijkstraPath.Length;
+
+        //double to hold totalDistance
+        double totalDistance = 0;
+
+        int fromNode; // represents the node coming from for each edge
+        int toNode = dijkstraPath[0]; // represents node going to
+        double edgeDistance; // stored so can check if lift
+
+        for (int i = 0; i < numPathNodes-1; i++) {
+            fromNode = toNode; // previous to node is now from node
+            toNode = dijkstraPath[i+1]; // to node is the next in array
+            edgeDistance = distDistMatrix[fromNode, toNode];
+            if (edgeDistance == 0) {
+                throw new ApplicationException($"Program has found Edge '{fromNode}', '{toNode}' with a distance of 0");
+            }
+            else if (infoMatrix[fromNode, toNode] == 'L') {
+                //do nothing as this shouldnt be updated
+            }
+            else {
+                // handles every other edge by adding to distance
+                totalDistance += edgeDistance;
+            }
+        }
+        
+        return Math.Round(totalDistance,1);
+    }
+}
+
+public class Floyd 
+{
+
+    // fields
+
+
+    // constructors
+    public Floyd(){
+    }
+
+
+    // methods
+
+    /**
+    This function takes a distance matrix and uses the Floyd-Warshall algorithm to compute
+    a matrix of minimum distances and a matrix for intermediary points.
+    */
+    public (double[,], int[,]) FloydsAlgorithm(double[,] matrix) {
+
+        int numRows = matrix.GetLength(0);
+        int numColumns = matrix.GetLength(1);
+        // validate the matrix input by ensuring that it is n x n
+        // achieved by finding number of rows and columns
+        if (numRows != numColumns) {
+            throw new FormatException($"The input '{matrix}' does not have an equal number of rows as columns.");
+        }
+
+        // now for the algorithm
+        // initialise two returning matrices
+        // min dist will be same as matrix for now
+        // node will have column index copied down vertically
+        // so each row will be {0, 1, 2, 3, 4, ..., n-2, n-1} where n is length of row
+
+        double[,] minDistMatrix = new double[numRows, numColumns];
+        int[,]  nodeMatrix = new int[numRows, numColumns];
+        for (int i = 0; i < numRows; i++) {
+            for (int j = 0; j < numColumns; j ++) {
+                minDistMatrix[i, j] = matrix[i, j];
+                nodeMatrix[i, j] = j;
+            }
+        }
+
+        return (minDistMatrix, nodeMatrix);
+    }
 }
 
 internal class Program
@@ -526,7 +618,7 @@ internal class Program
         // DD Test 9
         double[,] matrixK = new double[6, 6] {
             {0, 0, 0, 9.3, 28.4, 1.7},
-            {0, 0, 15.6, 0, 0, 0},
+            {0, 0, 15.7, 0, 0, 0},
             {0, 15.6, 0, 3.1, 0, 0},
             {9.3, 0, 3.1, 0, 0, 14.5},
             {28.4, 0, 0, 0, 0, 0},
@@ -704,6 +796,16 @@ internal class Program
 
         double[] listD = new double[16] {0.0, 19.9, 54.9, 39.1, 22.1, 14.1, 24.7, 11.3, 5.7, 31.2, 27.9, 23.5, 24.2, 49.1, 25.1, 10.2};
 
+        // DD Test 21
+        char[,] matrixP = new char[6,6] {
+            {'0', '0', '0', 'O', 'O', 'C'}, 
+            {'0', '0', 'I', '0', '0', '0'}, 
+            {'0', 'I', '0', 'L', '0', '0'}, 
+            {'O', '0', 'L', '0', '0', 'S'}, 
+            {'O', '0', '0', '0', '0', '0'}, 
+            {'C', '0', '0', 'S', '0', '0'}
+        };
+
 
         /* 
         // start Node
@@ -840,7 +942,7 @@ internal class Program
         string formatted2 = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",eta);
         Console.WriteLine(formatted2); */
 
-        Dijkstra dijk = new Dijkstra();
+        /* Dijkstra dijk = new Dijkstra();
         int startNode = 0;
         int targetNode = 13;
         int[] returnList = dijk.FindDijkstrasPath(matrixD, listD, startNode, targetNode);
@@ -854,6 +956,17 @@ internal class Program
         }
         else {
             Console.WriteLine("Unsuccessful Test");
+        } */
+
+        Dijkstra dijk = new Dijkstra();
+        double returnDistance = dijk.CalculateDistance(listM, matrixK, matrixP);
+        Console.WriteLine(returnDistance);
+        if (returnDistance == 53.4) {
+            Console.WriteLine("\nSuccessful Test");
         }
+        else {
+            Console.WriteLine("\nUnsuccessful Test");
+        }
+
     } 
 }
