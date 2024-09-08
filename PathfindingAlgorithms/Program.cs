@@ -563,7 +563,39 @@ public class Floyd
             }
         }
 
-        // continue code here.
+        double rowVal;
+        double colVal;
+        double currentVal;
+
+        for (int currentNode = 0; currentNode < numRows; currentNode++) {
+            for (int rowNum = 0; rowNum < numRows; rowNum++) {
+                for (int colNum = 0; colNum < numColumns; colNum++) {
+                    if (rowNum == currentNode || colNum == currentNode) {
+                        // do nothing
+                        // this is part of the + shape thing
+                    }
+                    else if (rowNum == colNum) {
+                        // do nothing
+                        // this is an edge going from node x to node x, so is not a real edge
+                    }
+                    else {
+                        // below is definitely correct
+                        rowVal = minDistMatrix[currentNode, colNum];
+                        colVal = minDistMatrix[rowNum, currentNode];
+                        currentVal = minDistMatrix[rowNum, colNum];
+                        if (rowVal == 0 || colVal == 0) {
+                            // do nothing
+                            // either of these have not yet been calculated, so are infinite min distance
+                        }
+                        else if (rowVal + colVal < currentVal || currentVal == 0) {
+                            // more efficient route found, so update
+                            minDistMatrix[rowNum, colNum] = Math.Round(rowVal + colVal, 1);
+                            nodeMatrix[rowNum, colNum] = currentNode;
+                        }
+                    }
+                }
+            }
+        }
 
         return (minDistMatrix, nodeMatrix);
     }
@@ -574,7 +606,7 @@ internal class Program
     private static void Main(string[] args)
     {
 
-        /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
+        bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
             bool areEqual = true;
             // Check if both arrays are null or reference the same array
             if (ReferenceEquals(matrix1, matrix2)) areEqual = true;
@@ -603,13 +635,13 @@ internal class Program
             }
 
             return areEqual;
-        } */
+        }
         
         // DD Test 8
         double[,] matrixJ = new double[6, 6] {
             {0, 0, 0, 4, 5, 0},
             {0, 0, 2, 4, 6, 8},
-            {0, 2, 0, 0, 3, 12},
+            {0, 2, 0, 0, 2, 12},
             {4, 4, 0, 0, 0, 3},
             {5, 6, 2, 0, 0, 0},
             {0, 8, 12, 3, 0, 0}
@@ -808,6 +840,26 @@ internal class Program
             {'C', '0', '0', 'S', '0', '0'}
         };
 
+        // DD Test 23
+
+        double[,] matrixN = new double[6,6] {
+            {0, 8.0, 7.0, 4.0, 5.0, 7.0}, 
+            {8.0, 0, 2.0, 4.0, 4.0, 7.0}, 
+            {7.0, 2.0, 0, 6.0, 2.0, 9.0}, 
+            {4.0, 4.0, 6.0, 0, 8.0, 3.0}, 
+            {5.0, 4.0, 2.0, 8.0, 0, 11.0}, 
+            {7.0, 7.0, 9.0, 3.0, 11.0, 0}
+        };
+
+        int[,] matrixO = new int[6,6] {
+            {0, 3, 4, 3, 4, 3}, 
+            {3, 1, 2, 3, 2, 3}, 
+            {4, 1, 2, 1, 4, 3}, 
+            {0, 1, 1, 3, 2, 5}, 
+            {0, 2, 2, 2, 4, 3}, 
+            {3, 3, 3, 3, 3, 5}
+        };
+
 
         /* 
         // start Node
@@ -960,7 +1012,7 @@ internal class Program
             Console.WriteLine("Unsuccessful Test");
         } */
 
-        Dijkstra dijk = new Dijkstra();
+        /* Dijkstra dijk = new Dijkstra();
         double returnDistance = dijk.CalculateDistance(listM, matrixK, matrixP);
         Console.WriteLine(returnDistance);
         if (returnDistance == 53.4) {
@@ -968,7 +1020,49 @@ internal class Program
         }
         else {
             Console.WriteLine("\nUnsuccessful Test");
-        }
+        } */
 
+        Floyd floyd= new Floyd();
+        (double[,] matrix1, int[,] matrix2) = floyd.FloydsAlgorithm(matrixD);
+
+        for (int row = 0; row < matrix1.GetLength(0); row++)
+        {
+            for (int col = 0; col < matrix1.GetLength(1); col++)
+            {
+                Console.Write(matrix1[row, col]); //also output the value
+                if (col != matrix1.Length - 1)
+                {
+                    Console.Write(", ");
+                }
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine();
+
+        for (int row = 0; row < matrix2.GetLength(0); row++)
+        {
+            for (int col = 0; col < matrix2.GetLength(1); col++)
+            {
+                Console.Write(matrix2[row, col]); //also output the value
+                if (col != matrix2.Length - 1)
+                {
+                    Console.Write(", ");
+                }
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine();
+
+        
+
+        Console.WriteLine("Matrix 1:");
+        bool equal1 = MatrixCheckEqual(matrix1, matrixL);
+
+        if (equal1) {
+            Console.WriteLine("Successful Test");
+        }
+        else {
+            Console.WriteLine("Unsuccessful Test");
+        }
     } 
 }
