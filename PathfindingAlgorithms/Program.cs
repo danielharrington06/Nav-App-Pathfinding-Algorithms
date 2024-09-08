@@ -606,7 +606,7 @@ internal class Program
     private static void Main(string[] args)
     {
 
-        bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
+        /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
             bool areEqual = true;
             // Check if both arrays are null or reference the same array
             if (ReferenceEquals(matrix1, matrix2)) areEqual = true;
@@ -635,7 +635,7 @@ internal class Program
             }
 
             return areEqual;
-        }
+        } */
         
         // DD Test 8
         double[,] matrixJ = new double[6, 6] {
@@ -1022,7 +1022,7 @@ internal class Program
             Console.WriteLine("\nUnsuccessful Test");
         } */
 
-        Floyd floyd= new Floyd();
+        /* Floyd floyd= new Floyd();
         (double[,] matrix1, int[,] matrix2) = floyd.FloydsAlgorithm(matrixD);
 
         for (int row = 0; row < matrix1.GetLength(0); row++)
@@ -1061,6 +1061,6 @@ internal class Program
         }
         else {
             Console.WriteLine("Unsuccessful Test");
-        }
+        } */
     } 
 }
