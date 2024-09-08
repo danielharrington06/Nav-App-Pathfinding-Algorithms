@@ -1053,8 +1053,6 @@ internal class Program
         }
         Console.WriteLine();
 
-        
-
         Console.WriteLine("Matrix 1:");
         bool equal1 = MatrixCheckEqual(matrix1, matrixL);
 
