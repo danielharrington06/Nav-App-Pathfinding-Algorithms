@@ -740,6 +740,7 @@ public class DatabaseHelper
                 fieldNames.Add(reader.GetName(i));
             }
 
+            // read data
             while (reader.Read())
             {
                 var rowValues = new List<object>();
@@ -1228,6 +1229,17 @@ internal class Program
                 Console.WriteLine($"{kvp.Key}: {kvp.Value}");
             }
         }
- */
+        */
+        var dbHelper = new DatabaseHelper();
+        var (columnedValues, fieldNames) = dbHelper.ExecuteSelect("SELECT * FROM tblnode");
+
+        // Print field names
+        Console.WriteLine("Field Names: " + string.Join(", ", fieldNames));
+
+        // Print columned values
+        foreach (var row in columnedValues)
+        {
+            Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
+        }
     } 
 }
