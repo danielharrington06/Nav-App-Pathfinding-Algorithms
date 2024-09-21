@@ -2,7 +2,8 @@
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using MySql.Data.MySqlClient; // include MySQL package
+using MySql.Data.MySqlClient;
+using MySql.Data.MySqlClient.Authentication; // include MySQL package
 
 
 public class DistanceMatrix
@@ -602,7 +603,7 @@ public class Floyd
     }
 }
 
-public class Database
+public class DatabaseHelper
 {
     // fields
     public  MySqlConnection connection;
@@ -612,11 +613,11 @@ public class Database
     private string password;
 
     // constructors
-    public Database(){
+    public DatabaseHelper(){
 
         // configure connection settings
         server = "localhost";
-        database = "stannavappdb";
+        database = "stanavappdb";
         uid = "root";
         password = "rU2n4s?Qf6gEb!pIbci8";
         string connectionString;
@@ -683,7 +684,7 @@ public class Database
         bool complete = false;
         // open connection
         if (OpenConnection() == true) {
-            // create a command and assign the query and connection from the constructure
+            // create command
             MySqlCommand command = new MySqlCommand(query, connection);
             // execute command
             command.ExecuteNonQuery();
@@ -698,19 +699,54 @@ public class Database
     // The following three methods are not technically needed
     // but are nice as it will be clearer when reading code what functions do.
 
-    private bool Insert(string query) {
+    private bool ExecuteInsert(string query) {
         return ExecuteSqlVoid(query);
     }
 
-    private bool Update(string query) {
+    private bool ExecuteUpdate(string query) {
         return ExecuteSqlVoid(query);
     }
 
-    private bool Delete(string query) {
+    private bool ExecuteDelete(string query) {
         return ExecuteSqlVoid(query);
+    }
+
+    /* private MySqlDataReader Select(string query) {
+        MySqlDataReader dataReader;
+        // open connection
+        if (OpenConnection() == true) {
+            // create command
+            MySqlCommand command = new MySqlCommand(query, connection);
+            // create a data reader and execute the command
+             dataReader = command.ExecuteReader();
+        }
+
+        return dataReader;
+    } */
+
+    public List<Dictionary<string, object>> ExecuteSelect(string query) {
+
+        // to hold results
+        List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
+
+        if (OpenConnection() == true) {
+            MySqlCommand command = new MySqlCommand(query, connection);
+            MySqlDataReader reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                Dictionary<string, object> row = new Dictionary<string, object>();
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    row[reader.GetName(i)] = reader[i];
+                }
+                results.Add(row);
+            }
+            CloseConnection();
+        }
+
+        return results;
     }
     
-
 }
 
 internal class Program
@@ -1174,5 +1210,16 @@ internal class Program
         else {
             Console.WriteLine("Unsuccessful Test");
         } */
+
+        DatabaseHelper db = new DatabaseHelper();
+        var results = db.ExecuteSelect("SELECT * FROM tblnode");
+        foreach (var row in results)
+        {
+            foreach (var kvp in row)
+            {
+                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+            }
+        }
+
     } 
 }
