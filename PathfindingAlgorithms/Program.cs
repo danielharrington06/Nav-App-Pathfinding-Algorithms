@@ -711,20 +711,11 @@ public class DatabaseHelper
         return ExecuteSqlVoid(query);
     }
 
-    /* private MySqlDataReader Select(string query) {
-        MySqlDataReader dataReader;
-        // open connection
-        if (OpenConnection() == true) {
-            // create command
-            MySqlCommand command = new MySqlCommand(query, connection);
-            // create a data reader and execute the command
-             dataReader = command.ExecuteReader();
-        }
-
-        return dataReader;
-    } */
-
-    public (List<List<object>>, List<string>) ExecuteSelect(string query) {
+    /**
+    This function takes a select query and returns a list of field names and a list of values.
+    It works for any select statement.
+    */
+    public (List<string>, List<List<object>>) ExecuteSelect(string query) {
 
         // to hold results
         List<List<object>> columnedValues = new List<List<object>>();
@@ -753,8 +744,10 @@ public class DatabaseHelper
             CloseConnection();
         }
 
-        return (columnedValues, fieldNames);
+        return (fieldNames, columnedValues);
     }
+
+
     
 }
 
@@ -1231,7 +1224,7 @@ internal class Program
         }
         */
         var dbHelper = new DatabaseHelper();
-        var (columnedValues, fieldNames) = dbHelper.ExecuteSelect("SELECT * FROM tblnode");
+        var (fieldNames, columnedValues) = dbHelper.ExecuteSelect("SELECT * FROM tblnode");
 
         // Print field names
         Console.WriteLine("Field Names: " + string.Join(", ", fieldNames));
