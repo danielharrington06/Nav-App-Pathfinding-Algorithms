@@ -715,7 +715,7 @@ public class DatabaseHelper
     This function takes a select query and returns a list of field names and a list of values.
     It works for any select statement.
     */
-    public (List<string>, List<List<object>>) ExecuteSelect(string query) {
+    private (List<string>, List<List<object>>) ExecuteSelect(string query) {
 
         // to hold results
         List<List<object>> columnedValues = new List<List<object>>();
@@ -723,7 +723,9 @@ public class DatabaseHelper
         List<string> fieldNames = new List<string>();
 
         if (OpenConnection() == true) {
+            // create mysql command
             MySqlCommand command = new MySqlCommand(query, connection);
+            // execute command
             MySqlDataReader reader = command.ExecuteReader();
 
             // read field names
@@ -741,10 +743,35 @@ public class DatabaseHelper
                 }
                 columnedValues.Add(rowValues);
             }
+
+            // close connection
             CloseConnection();
         }
 
         return (fieldNames, columnedValues);
+    }
+
+    /**
+    This function carries out the scalar select.
+    This is useful for Count(*) or average of values.
+    It takes a query and returns -1 if there is an error.
+    */
+    private double ExecuteScalarSelect(string query) {
+
+        double scalarValue = -1;
+
+        // open connection
+        if (OpenConnection() == true) {
+            // create mysql command
+            MySqlCommand command = new MySqlCommand(query, connection);
+            // execute scalar will only return one value
+            scalarValue = int.Parse(command.ExecuteScalar()+"");
+            // close connection
+            CloseConnection();
+
+        }
+
+        return scalarValue;
     }
 
 
