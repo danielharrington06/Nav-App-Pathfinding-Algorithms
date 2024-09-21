@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using MySql.Data.MySqlClient; // include MySQL package
 
 
 public class DistanceMatrix
@@ -599,6 +600,82 @@ public class Floyd
 
         return (minDistMatrix, nodeMatrix);
     }
+}
+
+public class Database
+{
+    // fields
+    public  MySqlConnection connection;
+    private string server;
+    private string database;
+    private string uid;
+    private string password;
+
+    // constructors
+    public Database(){
+
+        // configure connection settings
+        server = "localhost";
+        database = "stannavappdb";
+        uid = "root";
+        password = "rU2n4s?Qf6gEb!pIbci8";
+        string connectionString;
+        connectionString = "SERVER=" + server + ";" + "DATABASE=" + database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
+
+        connection = new MySqlConnection(connectionString);
+    }
+
+    /** 
+    This function attempts to open connection to the database.
+    It returns true if it is succesful and false if not. 
+    */
+    private bool OpenConnection() {
+        
+        try {
+            connection.Open();
+            return true;
+
+        }
+        catch (MySqlException ex){
+            // two most common errors are
+            // 0: cannot connect to server
+            // 1045: invalid username and or password
+            switch (ex.Number)
+            {
+                case 0:
+                    Console.WriteLine("Cannot connect to sever.");
+                    break;
+                case 1045:
+                    Console.WriteLine("Invalid username/password.");
+                    break;
+                default:
+                    Console.WriteLine("An error has occured.");
+                    break;
+            }
+            return false;
+        }
+
+    }
+
+    /**
+    This function attempts to close the database connection.
+    It returns true if it is succesful and false if not.
+    */
+    private bool CloseConnection() {
+
+        try {
+            connection.Close();
+            return true;
+        }
+        catch (MySqlException ex){
+            Console.WriteLine(ex.Message);
+            return false;
+        }
+    }
+
+
+    
+
 }
 
 internal class Program
