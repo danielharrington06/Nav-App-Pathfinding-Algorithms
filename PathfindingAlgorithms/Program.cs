@@ -724,27 +724,35 @@ public class DatabaseHelper
         return dataReader;
     } */
 
-    public List<Dictionary<string, object>> ExecuteSelect(string query) {
+    public (List<List<object>>, List<string>) ExecuteSelect(string query) {
 
         // to hold results
-        List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
+        List<List<object>> columnedValues = new List<List<object>>();
+        // to hold field names
+        List<string> fieldNames = new List<string>();
 
         if (OpenConnection() == true) {
             MySqlCommand command = new MySqlCommand(query, connection);
             MySqlDataReader reader = command.ExecuteReader();
+
+            // read field names
+            for (int i = 0; i < reader.FieldCount; i++) {
+                fieldNames.Add(reader.GetName(i));
+            }
+
             while (reader.Read())
             {
-                Dictionary<string, object> row = new Dictionary<string, object>();
+                var rowValues = new List<object>();
                 for (int i = 0; i < reader.FieldCount; i++)
                 {
-                    row[reader.GetName(i)] = reader[i];
+                    rowValues.Add(reader[i]);
                 }
-                results.Add(row);
+                columnedValues.Add(rowValues);
             }
             CloseConnection();
         }
 
-        return results;
+        return (columnedValues, fieldNames);
     }
     
 }
@@ -1211,7 +1219,7 @@ internal class Program
             Console.WriteLine("Unsuccessful Test");
         } */
 
-        DatabaseHelper db = new DatabaseHelper();
+        /* DatabaseHelper db = new DatabaseHelper();
         var results = db.ExecuteSelect("SELECT * FROM tblnode");
         foreach (var row in results)
         {
@@ -1220,6 +1228,6 @@ internal class Program
                 Console.WriteLine($"{kvp.Key}: {kvp.Value}");
             }
         }
-
+ */
     } 
 }
