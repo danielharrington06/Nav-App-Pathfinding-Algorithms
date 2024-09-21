@@ -773,9 +773,6 @@ public class DatabaseHelper
 
         return scalarValue;
     }
-
-
-    
 }
 
 internal class Program
@@ -1261,7 +1258,7 @@ internal class Program
         {
             Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
         } */
-        
+
         /* DatabaseHelper db = new DatabaseHelper();
         double num = db.ExecuteScalarSelect("SELECT  FROM tblnode");
         Console.WriteLine(num); */
