@@ -756,7 +756,7 @@ public class DatabaseHelper
     This is useful for Count(*) or average of values.
     It takes a query and returns -1 if there is an error.
     */
-    private double ExecuteScalarSelect(string query) {
+    public double ExecuteScalarSelect(string query) {
 
         double scalarValue = -1;
 
@@ -1250,7 +1250,7 @@ internal class Program
             }
         }
         */
-        var dbHelper = new DatabaseHelper();
+        /* var dbHelper = new DatabaseHelper();
         var (fieldNames, columnedValues) = dbHelper.ExecuteSelect("SELECT * FROM tblnode");
 
         // Print field names
@@ -1260,6 +1260,10 @@ internal class Program
         foreach (var row in columnedValues)
         {
             Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
-        }
+        } */
+        
+        /* DatabaseHelper db = new DatabaseHelper();
+        double num = db.ExecuteScalarSelect("SELECT  FROM tblnode");
+        Console.WriteLine(num); */
     } 
 }
