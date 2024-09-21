@@ -673,7 +673,42 @@ public class Database
         }
     }
 
+    /**
+    This function takes an insert, delete or update query and carries out the action.
+    It returns whether or not it was successful.
+    It cannot be used by select as this returns results.
+    */
+    private bool ExecuteSqlVoid(string query) {
 
+        bool complete = false;
+        // open connection
+        if (OpenConnection() == true) {
+            // create a command and assign the query and connection from the constructure
+            MySqlCommand command = new MySqlCommand(query, connection);
+            // execute command
+            command.ExecuteNonQuery();
+            // close connection
+            CloseConnection();
+
+            complete = true;
+        }
+        return complete;
+    }
+
+    // The following three methods are not technically needed
+    // but are nice as it will be clearer when reading code what functions do.
+
+    private bool Insert(string query) {
+        return ExecuteSqlVoid(query);
+    }
+
+    private bool Update(string query) {
+        return ExecuteSqlVoid(query);
+    }
+
+    private bool Delete(string query) {
+        return ExecuteSqlVoid(query);
+    }
     
 
 }
