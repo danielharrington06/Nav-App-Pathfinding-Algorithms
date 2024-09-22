@@ -699,15 +699,15 @@ public class DatabaseHelper
     // The following three methods are not technically needed
     // but are nice as it will be clearer when reading code what functions do.
 
-    private bool ExecuteInsert(string query) {
+    public bool ExecuteInsert(string query) {
         return ExecuteSqlVoid(query);
     }
 
-    private bool ExecuteUpdate(string query) {
+    public bool ExecuteUpdate(string query) {
         return ExecuteSqlVoid(query);
     }
 
-    private bool ExecuteDelete(string query) {
+    public bool ExecuteDelete(string query) {
         return ExecuteSqlVoid(query);
     }
 
@@ -715,7 +715,7 @@ public class DatabaseHelper
     This function takes a select query and returns a list of field names and a list of values.
     It works for any select statement.
     */
-    private (List<string>, List<List<object>>) ExecuteSelect(string query) {
+    public (List<string>, List<List<object>>) ExecuteSelect(string query) {
 
         // to hold results
         List<List<object>> columnedValues = new List<List<object>>();
@@ -1247,7 +1247,7 @@ internal class Program
             }
         }
         */
-        /* var dbHelper = new DatabaseHelper();
+        var dbHelper = new DatabaseHelper();
         var (fieldNames, columnedValues) = dbHelper.ExecuteSelect("SELECT * FROM tblnode");
 
         // Print field names
@@ -1257,10 +1257,17 @@ internal class Program
         foreach (var row in columnedValues)
         {
             Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
-        } */
+        }
 
         /* DatabaseHelper db = new DatabaseHelper();
         double num = db.ExecuteScalarSelect("SELECT  FROM tblnode");
         Console.WriteLine(num); */
+
+        /* DatabaseHelper db = new DatabaseHelper();
+        db.OpenConnection();
+        Console.WriteLine("Connection successfully opened");
+        db.CloseConnection();
+        Console.WriteLine("Connection successfully closed"); */
+
     } 
 }
