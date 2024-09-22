@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Data.Common;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -46,6 +47,38 @@ public class DistanceMatrix
     }
 
     // methods
+
+    /**
+    This function calls functions that queries the database to create the non directional
+    dist dist matrix used by the program to create a time dist matrix.
+    */
+    public double[,] BuildDistDistMatrix() {
+
+        // get number of nodes so a n x n matrix array can be defined
+        DatabaseHelper db = new DatabaseHelper();
+        int numberOfNodes = db.GetNumberOfNodes();
+
+        // make node array
+
+
+        // initialise distance matrix
+        double[,] distDistMatrix = new double[numberOfNodes, numberOfNodes];
+
+        // query db for all edges
+        var (fields, values) = db.GetEdges();
+
+        // just in case the order has been changed, get indexes manually
+        int node1Index = fields.IndexOf("node_1_id");
+        int node2Index = fields.IndexOf("node_2_id");
+        int weightIndex = fields.IndexOf("weight");
+
+        return distDistMatrix;
+    }
+    
+    /**
+    This function calls functions that queries the database to create the non directional
+    info matrix used by the program to estimate times and ensure the matrix is correct.
+    */
 
     /**
     This functions configures a time distance matrix so that pathfinding can be carried out.
@@ -99,7 +132,7 @@ public class DistanceMatrix
     It takes both these values, considers what type of path it is, so it can then assign a velocity, then uses the
     time = distance / speed formula to return a value for time.
     */
-    public double EstimateTimeFromDistance(double distance, char info) {
+    private double EstimateTimeFromDistance(double distance, char info) {
         
         double realVelocity;
         double time;
@@ -145,7 +178,7 @@ public class DistanceMatrix
     This function is called to check how near the current time is to a list of congestion times.
     Makes use of the TimeSpan datatypes to represent times in a day
     */
-    public bool NearCongestionTime() {
+    private bool NearCongestionTime() {
 
         bool isNearCongestionTime = false;
         // using timespans as times of the day
@@ -800,6 +833,14 @@ public class DatabaseHelper
     }
 
     /**
+    This function uses SQL to get all nodes in tblnode.
+    */
+    public (List<string>, List<List<object>>) GetNodes() {
+
+        return ExecuteSelect("SELECT * FROM tblnode");
+    }
+
+    /**
     This function uses SQL to get all records in tbledge.
     */
     public (List<string>, List<List<object>>) GetEdges() {
@@ -814,8 +855,6 @@ public class DatabaseHelper
 
         return ExecuteSelect("SELECT * FROM tbledge WHERE one_way = true");
     }
-
-    
 }
 
 internal class Program
@@ -1359,7 +1398,7 @@ internal class Program
         Console.WriteLine(value); */
 
         var db = new DatabaseHelper();
-        db.ShowSelectResult(db.GetEdges());
+        db.ShowSelectResult(db.GetNodes());
 
     }   
 
