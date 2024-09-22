@@ -1359,7 +1359,7 @@ internal class Program
         Console.WriteLine(value); */
 
         var db = new DatabaseHelper();
-        db.ShowSelectResult(db.GetOneWayEdges());
+        db.ShowSelectResult(db.GetEdges());
 
     }   
 
