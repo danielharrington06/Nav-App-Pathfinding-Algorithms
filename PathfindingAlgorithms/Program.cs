@@ -699,15 +699,15 @@ public class DatabaseHelper
     // The following three methods are not technically needed
     // but are nice as it will be clearer when reading code what functions do.
 
-    public bool ExecuteInsert(string query) {
+    private bool ExecuteInsert(string query) {
         return ExecuteSqlVoid(query);
     }
 
-    public bool ExecuteUpdate(string query) {
+    private bool ExecuteUpdate(string query) {
         return ExecuteSqlVoid(query);
     }
 
-    public bool ExecuteDelete(string query) {
+    private bool ExecuteDelete(string query) {
         return ExecuteSqlVoid(query);
     }
 
@@ -715,7 +715,7 @@ public class DatabaseHelper
     This function takes a select query and returns a list of field names and a list of values.
     It works for any select statement.
     */
-    public (List<string>, List<List<object>>) ExecuteSelect(string query) {
+    private (List<string>, List<List<object>>) ExecuteSelect(string query) {
 
         // to hold results
         List<List<object>> columnedValues = new List<List<object>>();
@@ -756,7 +756,7 @@ public class DatabaseHelper
     This is useful for Count(*) or average of values.
     It takes a query and returns -1 if there is an error.
     */
-    public double ExecuteScalarSelect(string query) {
+    private double ExecuteScalarSelect(string query) {
 
         double scalarValue = -1;
 
