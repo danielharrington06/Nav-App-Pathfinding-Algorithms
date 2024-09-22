@@ -773,6 +773,14 @@ public class DatabaseHelper
 
         return scalarValue;
     }
+
+    /**
+    This function uses SQL to get the number of nodes in tblnode
+    */
+    public int GetNumberOfNodes() {
+        
+        return Convert.ToInt32(ExecuteScalarSelect("SELECT Count(node_id) FROM tblnode"));
+    }
 }
 
 internal class Program
@@ -1309,11 +1317,15 @@ internal class Program
         Console.Write("Press enter to continue");
         Console.ReadLine(); */
 
-        DatabaseHelper db = new DatabaseHelper();
+        /* DatabaseHelper db = new DatabaseHelper();
 
         // test scalar select
         double value = db.ExecuteScalarSelect("SELECT AVG(weight) FROM tbledge WHERE weight != 0");
-        Console.WriteLine(value);
+        Console.WriteLine(value); */
 
-    } 
+        var db = new DatabaseHelper();
+        Console.WriteLine(db.GetNumberOfNodes);
+
+    }   
+
 }
