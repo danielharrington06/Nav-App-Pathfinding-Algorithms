@@ -775,12 +775,47 @@ public class DatabaseHelper
     }
 
     /**
-    This function uses SQL to get the number of nodes in tblnode
+    This procedure outputs the result of a select query neatly.
+    */
+    public void ShowSelectResult((List<string>, List<List<object>> ) values) {
+
+        var (fieldNames, dataValues) = values;
+
+        // output field names
+        Console.WriteLine(string.Join(", ", fieldNames));
+
+        // output values
+        foreach (var row in dataValues)
+        {
+            Console.WriteLine(string.Join("\t", row)); // tab-separated for better readability
+        }
+    }
+
+    /**
+    This function uses SQL to get the number of nodes in tblnode.
     */
     public int GetNumberOfNodes() {
         
         return Convert.ToInt32(ExecuteScalarSelect("SELECT Count(node_id) FROM tblnode"));
     }
+
+    /**
+    This function uses SQL to get all records in tbledge.
+    */
+    public (List<string>, List<List<object>>) GetEdges() {
+
+        return ExecuteSelect("SELECT * FROM tbledge");
+    }
+
+    /**
+    This function uses SQL to get all edges that are one way
+    */
+    public (List<string>, List<List<object>>) GetOneWayEdges() {
+
+        return ExecuteSelect("SELECT * FROM tbledge WHERE one_way = true");
+    }
+
+    
 }
 
 internal class Program
@@ -1324,7 +1359,7 @@ internal class Program
         Console.WriteLine(value); */
 
         var db = new DatabaseHelper();
-        Console.WriteLine(db.GetNumberOfNodes);
+        db.ShowSelectResult(db.GetOneWayEdges());
 
     }   
 
