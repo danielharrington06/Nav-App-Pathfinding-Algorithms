@@ -1247,17 +1247,17 @@ internal class Program
             }
         }
         */
-        var dbHelper = new DatabaseHelper();
-        var (fieldNames, columnedValues) = dbHelper.ExecuteSelect("SELECT * FROM tblnode");
+        /* var dbHelper = new DatabaseHelper();
+        var (fieldNames, columnedValues) = dbHelper.ExecuteSelect("SELECT tbledge.edge_id, tbledge.node_1_id, tbledge.node_2_id, tbledge.weight, tbledge.edge_type_id FROM tbledge  INNER JOIN tblnode n1 ON tbledge.node_1_id = n1.node_id INNER JOIN tblnode n2 ON tbledge.node_2_id = n2.node_id WHERE n1.floor = 1 OR n2.floor = 1 ORDER BY tbledge.edge_id ASC");
 
         // Print field names
-        Console.WriteLine("Field Names: " + string.Join(", ", fieldNames));
+        Console.WriteLine("Field Names: " + string.Join(",\t", fieldNames));
 
         // Print columned values
         foreach (var row in columnedValues)
         {
             Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
-        }
+        } */
 
         /* DatabaseHelper db = new DatabaseHelper();
         double num = db.ExecuteScalarSelect("SELECT  FROM tblnode");
@@ -1269,5 +1269,8 @@ internal class Program
         db.CloseConnection();
         Console.WriteLine("Connection successfully closed"); */
 
+
+        DatabaseHelper db = new DatabaseHelper();
+        
     } 
 }
