@@ -765,7 +765,7 @@ public class DatabaseHelper
             // create mysql command
             MySqlCommand command = new MySqlCommand(query, connection);
             // execute scalar will only return one value
-            scalarValue = int.Parse(command.ExecuteScalar()+"");
+            scalarValue = double.Parse(command.ExecuteScalar()+"");
             // close connection
             CloseConnection();
 
@@ -1270,7 +1270,7 @@ internal class Program
         Console.WriteLine("Connection successfully closed"); */
 
 
-        DatabaseHelper db = new DatabaseHelper();
+        /* DatabaseHelper db = new DatabaseHelper();
 
         // test insert
         bool complete;
@@ -1307,7 +1307,13 @@ internal class Program
             Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
         }
         Console.Write("Press enter to continue");
-        Console.ReadLine();
+        Console.ReadLine(); */
+
+        DatabaseHelper db = new DatabaseHelper();
+
+        // test scalar select
+        double value = db.ExecuteScalarSelect("SELECT AVG(weight) FROM tbledge WHERE weight != 0");
+        Console.WriteLine(value);
 
     } 
 }
