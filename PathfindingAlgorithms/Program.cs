@@ -59,18 +59,48 @@ public class DistanceMatrix
         int numberOfNodes = db.GetNumberOfNodes();
 
         // make node array
+        int[] nodeArray = new int[numberOfNodes];
+        var (nodeFields, nodeValues) = db.GetNodes();
 
+        // just in case the order has been changed, get index manually
+        int nodeIndex = nodeFields.IndexOf("node_id");
+        
+        // now loop through nodeValues and put value in nodeArray
+        for (int i = 0; i < numberOfNodes; i++) {
+            
+            nodeArray[i] = Convert.ToInt32(nodeValues[i][nodeIndex]);
+        }
 
         // initialise distance matrix
         double[,] distDistMatrix = new double[numberOfNodes, numberOfNodes];
 
         // query db for all edges
-        var (fields, values) = db.GetEdges();
+        var (edgeFields, edgeValues) = db.GetEdges();
+
+        //get number of times need to loop from the edgeValues
+        int numberOfEdges = edgeValues.Count;
 
         // just in case the order has been changed, get indexes manually
-        int node1Index = fields.IndexOf("node_1_id");
-        int node2Index = fields.IndexOf("node_2_id");
-        int weightIndex = fields.IndexOf("weight");
+        int node1Index = edgeFields.IndexOf("node_1_id");
+        int node2Index = edgeFields.IndexOf("node_2_id");
+        int weightIndex = edgeFields.IndexOf("weight");
+
+        // loop through edges and update matrix
+        for (int i = 0; i < numberOfEdges; i++) {
+
+            // get indexes and weight from edge values
+            int node1Val = Convert.ToInt32(edgeValues[i][node1Index]);
+            int node2Val = Convert.ToInt32(edgeValues[i][node2Index]);
+            double weightVal = Convert.ToDouble(edgeValues[i][weightIndex]);
+            
+            // now update matrix
+            // put in both 1, 2 and 2, 1 because non directional            
+            distDistMatrix[node1Val, node2Val] = weightVal;
+            distDistMatrix[node2Val, node1Val] = weightVal;
+        }
+
+        // no need to go through and set values to 0 as this is done when initialised
+        // cont..
 
         return distDistMatrix;
     }
@@ -114,6 +144,7 @@ public class DistanceMatrix
 
         for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
             for (int colNum = 0; colNum < numberOfNodes; colNum++) {
+
                 distance = distDistMatrix[rowNum, colNum];
                 if (distance > 0) {
                     info = infoMatrix[rowNum, colNum];
@@ -833,6 +864,14 @@ public class DatabaseHelper
     }
 
     /**
+    This function uses SQL to get the number of nodes in tblnode.
+    */
+    public int GetNumberOfEdges() {
+        
+        return Convert.ToInt32(ExecuteScalarSelect("SELECT Count(edge_id) FROM tbledge"));
+    }
+
+    /**
     This function uses SQL to get all nodes in tblnode.
     */
     public (List<string>, List<List<object>>) GetNodes() {
@@ -1397,8 +1436,8 @@ internal class Program
         double value = db.ExecuteScalarSelect("SELECT AVG(weight) FROM tbledge WHERE weight != 0");
         Console.WriteLine(value); */
 
-        var db = new DatabaseHelper();
-        db.ShowSelectResult(db.GetNodes());
+        /* var db = new DatabaseHelper();
+        db.ShowSelectResult(db.GetNodes()); */
 
     }   
 
