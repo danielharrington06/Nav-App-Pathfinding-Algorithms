@@ -1271,6 +1271,43 @@ internal class Program
 
 
         DatabaseHelper db = new DatabaseHelper();
-        
+
+        // test insert
+        bool complete;
+        complete = db.ExecuteInsert("INSERT INTO tblnode (node_id, floor, node_name, node_descript) VALUES (1000, 0, 'Test', 'This is a test')");
+        var (fieldNames, columnedValues) = db.ExecuteSelect("SELECT * FROM tblnode WHERE node_id = 1000");
+
+        // Print columned values
+        foreach (var row in columnedValues)
+        {
+            Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
+        }
+        Console.Write("Press enter to continue");
+        Console.ReadLine();
+
+        // test update
+        complete = db.ExecuteUpdate("UPDATE tblnode SET node_name = 'Test 1'");
+        var (fieldNames1, columnedValues1) = db.ExecuteSelect("SELECT * FROM tblnode WHERE node_id = 1000");
+
+        // Print columned values
+        foreach (var row in columnedValues1)
+        {
+            Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
+        }
+        Console.Write("Press enter to continue");
+        Console.ReadLine();
+
+        //test delete
+        complete = db.ExecuteDelete("DELETE FROM tblnode WHERE node_id = 1000");
+        var (fieldNames2, columnedValues2) = db.ExecuteSelect("SELECT * FROM tblnode WHERE node_id = 1000");
+
+        // Print columned values
+        foreach (var row in columnedValues2)
+        {
+            Console.WriteLine(string.Join("\t", row)); // Tab-separated for better visibility
+        }
+        Console.Write("Press enter to continue");
+        Console.ReadLine();
+
     } 
 }
