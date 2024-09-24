@@ -81,26 +81,36 @@ public class DistanceMatrix
         int numberOfEdges = edgeValues.Count;
 
         // just in case the order has been changed, get indexes manually
-        int node1Index = edgeFields.IndexOf("node_1_id");
-        int node2Index = edgeFields.IndexOf("node_2_id");
-        int weightIndex = edgeFields.IndexOf("weight");
+        int node1FieldIndex = edgeFields.IndexOf("node_1_id");
+        int node2FieldIndex = edgeFields.IndexOf("node_2_id");
+        int weightFieldIndex = edgeFields.IndexOf("weight");
 
         // loop through edges and update matrix
         for (int i = 0; i < numberOfEdges; i++) {
 
-            // get indexes and weight from edge values
-            int node1Val = Convert.ToInt32(edgeValues[i][node1Index]);
-            int node2Val = Convert.ToInt32(edgeValues[i][node2Index]);
-            double weightVal = Convert.ToDouble(edgeValues[i][weightIndex]);
+            // get node id from edge values
+            int node1ID = Convert.ToInt32(edgeValues[i][node1FieldIndex]); // returns a node id
+            int node2ID = Convert.ToInt32(edgeValues[i][node2FieldIndex]); // returns a node id
+
+            // get node index from node array
+            int node1Index = Array.IndexOf(nodeArray, node1ID);
+            int node2Index = Array.IndexOf(nodeArray, node2ID);
+
+            // get weight value from edge values
+            double weightVal = Math.Round(Convert.ToDouble(edgeValues[i][weightFieldIndex]), 1);
             
             // now update matrix
             // put in both 1, 2 and 2, 1 because non directional            
-            distDistMatrix[node1Val, node2Val] = weightVal;
-            distDistMatrix[node2Val, node1Val] = weightVal;
+            distDistMatrix[node1Index, node2Index] = weightVal;
+            distDistMatrix[node2Index, node1Index] = weightVal;
         }
 
         // no need to go through and set values to 0 as this is done when initialised
-        // cont..
+
+        Console.WriteLine("NumIterations:" + Convert.ToString(numIterations));
+        Console.WriteLine("NumRoundingErrors:" + Convert.ToString(numRoundingErrors));
+        Console.WriteLine("PercentageIssue:" + Convert.ToString(numRoundingErrors/numIterations));
+        
 
         return distDistMatrix;
     }
@@ -1438,6 +1448,22 @@ internal class Program
 
         /* var db = new DatabaseHelper();
         db.ShowSelectResult(db.GetNodes()); */
+
+        /* var dm = new DistanceMatrix();
+        double[,] matrix = dm.BuildDistDistMatrix();
+        for (int row = 0; row < matrix.GetLength(0); row++)
+        {
+            for (int col = 0; col < matrix.GetLength(1); col++)
+            {
+                Console.Write(matrix[row, col]); //also output the value
+                if (col != matrix.Length - 1)
+                {
+                    Console.Write(", ");
+                }
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine(); */
 
     }   
 
