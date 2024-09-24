@@ -1446,14 +1446,10 @@ internal class Program
 
         var dm = new DistanceMatrix();
         double[,] matrix = dm.BuildDistDistMatrix();
-        int nummm = 0;
         for (int row = 0; row < matrix.GetLength(0); row++)
         {
             for (int col = 0; col < matrix.GetLength(1); col++)
             {   
-                if (matrix[row, col] != 0) {
-                    nummm++;
-                }
                 Console.Write(matrix[row, col]); //also output the value
                 if (col != matrix.Length - 1)
                 {
@@ -1463,7 +1459,6 @@ internal class Program
             Console.WriteLine();
         }
         Console.WriteLine();
-        Console.WriteLine(nummm);
     }   
 
 }
