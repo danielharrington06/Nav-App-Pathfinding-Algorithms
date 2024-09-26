@@ -120,7 +120,7 @@ public class DistanceMatrix
         // go through info matrix and change values to '0'
         for (int i = 0; i < numberOfNodes; i++) {
             for (int j = 0; j < numberOfNodes; j++) {
-                if (infoMatrix[i, j] == '?') {
+                if (infoMatrix[i, j] == '\0') {
                     infoMatrix[i, j] = '0';
                 }
             }
