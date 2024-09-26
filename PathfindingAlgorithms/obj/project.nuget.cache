@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "5dnc49g2cIWHf9qL6Sz3GIM5kevIhySZ+BlSt9RwaO3OwvHHE9fBrMVG5eWrbYjBzXPrqNMyJd7pY7LMbQ9m+w==",
+  "dgSpecHash": "Ees5kR3dgpDg+plGj4BHD+kW5fheIeGv5IIiy35WL6XKev1nEcV7EHhb5imL9/dowCWt1UAEPOsvYPzb2Dq7zg==",
   "success": true,
-  "projectFilePath": "c:\\Users\\danie\\Programming\\CS Coursework Code\\Source Code\\Nav-App-Pathfinding-Algorithms\\PathfindingAlgorithms\\PathfindingAlgorithms.csproj",
+  "projectFilePath": "C:\\Users\\danie\\Programming\\CS Coursework Code\\Source Code\\Nav-App-Pathfinding-Algorithms\\PathfindingAlgorithms\\PathfindingAlgorithms.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\danie\\.nuget\\packages\\bouncycastle.cryptography\\2.3.1\\bouncycastle.cryptography.2.3.1.nupkg.sha512",
     "C:\\Users\\danie\\.nuget\\packages\\google.protobuf\\3.26.1\\google.protobuf.3.26.1.nupkg.sha512",

@@ -50,9 +50,9 @@ public class DistanceMatrix
 
     /**
     This function calls functions that queries the database to create the non directional
-    dist dist matrix used by the program to create a time dist matrix.
+    dist dist matrix and info matrix used by the program to create a time dist matrix.
     */
-    public double[,] BuildDistDistMatrix() {
+    public (double[,], double[,]) BuildDistDistMatrix() {
 
         // get number of nodes so a n x n matrix array can be defined
         DatabaseHelper db = new DatabaseHelper();
@@ -74,6 +74,9 @@ public class DistanceMatrix
         // initialise distance matrix
         double[,] distDistMatrix = new double[numberOfNodes, numberOfNodes];
 
+        // initialise info matrix
+        double[,] infoMatrix = new double[numberOfNodes, numberOfNodes];
+
         // query db for all edges
         var (edgeFields, edgeValues) = db.GetEdges();
 
@@ -84,6 +87,7 @@ public class DistanceMatrix
         int node1FieldIndex = edgeFields.IndexOf("node_1_id");
         int node2FieldIndex = edgeFields.IndexOf("node_2_id");
         int weightFieldIndex = edgeFields.IndexOf("weight");
+        int infoFieldIndex = edgeFields.IndexOf("edge_type_id");
 
         // loop through edges and update matrix
         for (int i = 0; i < numberOfEdges; i++) {
@@ -98,22 +102,25 @@ public class DistanceMatrix
 
             // get weight value from edge values
             double weightVal = Math.Round(Convert.ToDouble(edgeValues[i][weightFieldIndex]), 1);
-            
-            // now update matrix
+
+            // get edge type / info value from edge values
+            char infoVal = Convert.ToChar(edgeValues[i][infoFieldIndex]);
+                                 
+            // now update matrices
+
             // put in both 1, 2 and 2, 1 because non directional            
             distDistMatrix[node1Index, node2Index] = weightVal;
             distDistMatrix[node2Index, node1Index] = weightVal;
+
+            // put in both 1, 2 and 2, 1 because non directional            
+            infoMatrix[node1Index, node2Index] = infoVal;
+            infoMatrix[node2Index, node1Index] = infoVal;
         }
 
         // no need to go through and set values to 0 as this is done when initialised        
 
-        return distDistMatrix;
-    }
-    
-    /**
-    This function calls functions that queries the database to create the non directional
-    info matrix used by the program to estimate times and ensure the matrix is correct.
-    */
+        return (distDistMatrix, infoMatrix);
+    }   
 
     /**
     This functions configures a time distance matrix so that pathfinding can be carried out.
