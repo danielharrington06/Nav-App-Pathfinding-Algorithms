@@ -52,7 +52,7 @@ public class DistanceMatrix
     This function calls functions that queries the database to create the non directional
     dist dist matrix and info matrix used by the program to create a time dist matrix.
     */
-    public (double[,], double[,]) BuildDistDistMatrix() {
+    public (double[,], char[,]) BuildDistDistMatrix() {
 
         // get number of nodes so a n x n matrix array can be defined
         DatabaseHelper db = new DatabaseHelper();
@@ -75,7 +75,7 @@ public class DistanceMatrix
         double[,] distDistMatrix = new double[numberOfNodes, numberOfNodes];
 
         // initialise info matrix
-        double[,] infoMatrix = new double[numberOfNodes, numberOfNodes];
+        char[,] infoMatrix = new char[numberOfNodes, numberOfNodes];
 
         // query db for all edges
         var (edgeFields, edgeValues) = db.GetEdges();
@@ -117,7 +117,14 @@ public class DistanceMatrix
             infoMatrix[node2Index, node1Index] = infoVal;
         }
 
-        // no need to go through and set values to 0 as this is done when initialised        
+        // go through info matrix and change values to '0'
+        for (int i = 0; i < numberOfNodes; i++) {
+            for (int j = 0; j < numberOfNodes; j++) {
+                if (infoMatrix[i, j] == '?') {
+                    infoMatrix[i, j] = '0';
+                }
+            }
+        }     
 
         return (distDistMatrix, infoMatrix);
     }   
@@ -1457,7 +1464,7 @@ internal class Program
         {
             for (int col = 0; col < distMatrix.GetLength(1); col++)
             {   
-                Console.Write(distMatrix[row, col]); //also output the value
+                Console.Write(infoMatrix[row, col]); //also output the value
                 if (col != distMatrix.Length - 1)
                 {
                     Console.Write(", ");
