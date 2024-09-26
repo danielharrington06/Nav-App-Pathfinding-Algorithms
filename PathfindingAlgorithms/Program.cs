@@ -1452,13 +1452,13 @@ internal class Program
         db.ShowSelectResult(db.GetNodes()); */
 
         var dm = new DistanceMatrix();
-        double[,] matrix = dm.BuildDistDistMatrix();
-        for (int row = 0; row < matrix.GetLength(0); row++)
+        var (distMatrix, infoMatrix) = dm.BuildDistDistMatrix();
+        for (int row = 0; row < distMatrix.GetLength(0); row++)
         {
-            for (int col = 0; col < matrix.GetLength(1); col++)
+            for (int col = 0; col < distMatrix.GetLength(1); col++)
             {   
-                Console.Write(matrix[row, col]); //also output the value
-                if (col != matrix.Length - 1)
+                Console.Write(distMatrix[row, col]); //also output the value
+                if (col != distMatrix.Length - 1)
                 {
                     Console.Write(", ");
                 }
