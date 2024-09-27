@@ -127,7 +127,34 @@ public class DistanceMatrix
         }     
 
         return (nodeArray, distDistMatrix, infoMatrix);
-    }   
+    }
+
+/**
+This function takes the results of the above function (node array, dist matrix, info amatrix)
+and sets all values to zero where the one way system applies.
+*/
+public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] distDistMatrix, char[,] infoMatrix) {
+    // get all one-way edges from db
+    DatabaseHelper db = new DatabaseHelper();
+    var (edgeFields, edgeValues) = db.GetOneWayEdges();
+    //get number of times need to loop from the edgeValues
+    int numberOfEdges = edgeValues.Count;
+    // just in case the order has been changed, get indexes manually
+    int node1FieldIndex = edgeFields.IndexOf("node_1_id");
+    int node2FieldIndex = edgeFields.IndexOf("node_2_id");
+    for (int i = 0; i < numberOfEdges; i++) {
+        // get node id from edge values
+        int node1ID = Convert.ToInt32(edgeValues[i][node1FieldIndex]); // returns a node id
+        int node2ID = Convert.ToInt32(edgeValues[i][node2FieldIndex]); // returns a node id
+        // get node index from node array
+        int node1Index = Array.IndexOf(nodeArray, node1ID);
+        int node2Index = Array.IndexOf(nodeArray, node2ID);
+        // set the edge from node 2 to node 1 to 0 in matrices
+        distDistMatrix[node2Index, node1Index] = 0;
+        infoMatrix[node2Index, node1Index] = '0';
+    }        
+    return (nodeArray, distDistMatrix, infoMatrix);
+}
 
     /**
     This functions configures a time distance matrix so that pathfinding can be carried out.
@@ -1460,12 +1487,13 @@ internal class Program
 
         var dm = new DistanceMatrix();
         var (nodeArray, distMatrix, infoMatrix) = dm.BuildNormalMatrices();
-        for (int row = 0; row < distMatrix.GetLength(0); row++)
+        var (nodeArrayOWS, distMatrixOWS, infoMatrixOWS) = dm.BuildOWSMatrices(nodeArray, distMatrix, infoMatrix);
+        for (int row = 0; row < distMatrixOWS.GetLength(0); row++)
         {
-            for (int col = 0; col < distMatrix.GetLength(1); col++)
+            for (int col = 0; col < distMatrixOWS.GetLength(1); col++)
             {   
-                Console.Write(infoMatrix[row, col]); //also output the value
-                if (col != distMatrix.Length - 1)
+                Console.Write(infoMatrixOWS[row, col]); //output the value
+                if (col != distMatrixOWS.Length - 1)
                 {
                     Console.Write(", ");
                 }
