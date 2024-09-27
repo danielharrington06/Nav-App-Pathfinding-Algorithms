@@ -52,7 +52,7 @@ public class DistanceMatrix
     This function calls functions that queries the database to create the non directional
     dist dist matrix and info matrix used by the program to create a time dist matrix.
     */
-    public (double[,], char[,]) BuildDistDistMatrix() {
+    public (int[], double[,], char[,]) BuildNormalMatrices() {
 
         // get number of nodes so a n x n matrix array can be defined
         DatabaseHelper db = new DatabaseHelper();
@@ -126,7 +126,7 @@ public class DistanceMatrix
             }
         }     
 
-        return (distDistMatrix, infoMatrix);
+        return (nodeArray, distDistMatrix, infoMatrix);
     }   
 
     /**
@@ -1459,7 +1459,7 @@ internal class Program
         db.ShowSelectResult(db.GetNodes()); */
 
         var dm = new DistanceMatrix();
-        var (distMatrix, infoMatrix) = dm.BuildDistDistMatrix();
+        var (nodeArray, distMatrix, infoMatrix) = dm.BuildNormalMatrices();
         for (int row = 0; row < distMatrix.GetLength(0); row++)
         {
             for (int col = 0; col < distMatrix.GetLength(1); col++)
