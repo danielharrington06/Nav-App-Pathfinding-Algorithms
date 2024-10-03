@@ -1488,11 +1488,15 @@ internal class Program
         var dm = new DistanceMatrix();
         var (nodeArray, distMatrix, infoMatrix) = dm.BuildNormalMatrices();
         var (nodeArrayOWS, distMatrixOWS, infoMatrixOWS) = dm.BuildOWSMatrices(nodeArray, distMatrix, infoMatrix);
+        int count = 0;
         for (int row = 0; row < distMatrixOWS.GetLength(0); row++)
         {
             for (int col = 0; col < distMatrixOWS.GetLength(1); col++)
             {   
                 Console.Write(infoMatrixOWS[row, col]); //output the value
+                if (infoMatrixOWS[row, col] != 0) {
+                    count++;
+                }
                 if (col != distMatrixOWS.Length - 1)
                 {
                     Console.Write(", ");
@@ -1501,6 +1505,9 @@ internal class Program
             Console.WriteLine();
         }
         Console.WriteLine();
+
+        Console.WriteLine(count);
     }   
+
 
 }
