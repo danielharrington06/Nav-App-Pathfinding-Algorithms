@@ -149,7 +149,6 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
     // just in case the order has been changed, get indexes manually
     int node1FieldIndex = edgeFields.IndexOf("node_1_id");
     int node2FieldIndex = edgeFields.IndexOf("node_2_id");
-    Console.WriteLine(numberOfEdges);
 
     for (int i = 0; i < numberOfEdges; i++) {
 
@@ -166,7 +165,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         infoMatrixOWS[node2Index, node1Index] = '0';
     } 
 
-    return (nodeArray, distDistMatrix, infoMatrix);
+    return (nodeArray, distDistMatrixOWS, infoMatrixOWS);
 }
 
     /**
@@ -1500,30 +1499,24 @@ internal class Program
 
         var dm = new DistanceMatrix();
         var (nodeArray, distMatrix, infoMatrix) = dm.BuildNormalMatrices();
-        int countDistMatrix1 = 0;
-        for (int row = 0; row < distMatrix.GetLength(0); row++)
-        {
-            for (int col = 0; col < distMatrix.GetLength(1); col++)
-            {   
-                
-                if (distMatrix[row, col] != 0) {
-                    countDistMatrix1++;
-                }
-            }
-        }
-        Console.WriteLine("num non zero edges in distMatrix1:" + Convert.ToString(countDistMatrix1));
         var (nodeArrayOWS, distMatrixOWS, infoMatrixOWS) = dm.BuildOWSMatrices(nodeArray, distMatrix, infoMatrix);
-        int countDistMatrix2 = 0;
+        int count = 0;
         for (int row = 0; row < distMatrixOWS.GetLength(0); row++)
         {
             for (int col = 0; col < distMatrixOWS.GetLength(1); col++)
             {   
-                if (distMatrix[row, col] != 0) {
-                    countDistMatrix2++;
+                
+                if (infoMatrixOWS[row, col] != '0') {
+                    count++;
+
+                    if (infoMatrixOWS[row, col] != infoMatrixOWS[col, row]) {
+                        Console.WriteLine(Convert.ToString(row) + "," + Convert.ToString(col) + ": " + Convert.ToString(infoMatrixOWS[row, col]) + ", " + Convert.ToString(infoMatrixOWS[col, row]));
+                        Console.WriteLine(Convert.ToString(row) + "," + Convert.ToString(col) + ": " + Convert.ToString(distMatrixOWS[row, col]) + ", " + Convert.ToString(distMatrixOWS[col, row]));
+                    }
                 }
             }
         }
-        Console.WriteLine("num non zero edges in distMatrix2:" + Convert.ToString(countDistMatrix2));
+        Console.WriteLine(count);
     }   
 
 
