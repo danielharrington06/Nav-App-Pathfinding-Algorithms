@@ -134,25 +134,38 @@ This function takes the results of the above function (node array, dist matrix, 
 and sets all values to zero where the one way system applies.
 */
 public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] distDistMatrix, char[,] infoMatrix) {
+
+    // clone matrices as they got passed by ref not by val
+    var distDistMatrixOWS = (double[,])distDistMatrix.Clone();
+    var infoMatrixOWS = (char[,])infoMatrix.Clone();
+    
     // get all one-way edges from db
     DatabaseHelper db = new DatabaseHelper();
     var (edgeFields, edgeValues) = db.GetOneWayEdges();
+
     //get number of times need to loop from the edgeValues
     int numberOfEdges = edgeValues.Count;
+
     // just in case the order has been changed, get indexes manually
     int node1FieldIndex = edgeFields.IndexOf("node_1_id");
     int node2FieldIndex = edgeFields.IndexOf("node_2_id");
+    Console.WriteLine(numberOfEdges);
+
     for (int i = 0; i < numberOfEdges; i++) {
+
         // get node id from edge values
         int node1ID = Convert.ToInt32(edgeValues[i][node1FieldIndex]); // returns a node id
         int node2ID = Convert.ToInt32(edgeValues[i][node2FieldIndex]); // returns a node id
+
         // get node index from node array
         int node1Index = Array.IndexOf(nodeArray, node1ID);
         int node2Index = Array.IndexOf(nodeArray, node2ID);
+
         // set the edge from node 2 to node 1 to 0 in matrices
-        distDistMatrix[node2Index, node1Index] = 0;
-        infoMatrix[node2Index, node1Index] = '0';
-    }        
+        distDistMatrixOWS[node2Index, node1Index] = 0;
+        infoMatrixOWS[node2Index, node1Index] = '0';
+    } 
+
     return (nodeArray, distDistMatrix, infoMatrix);
 }
 
@@ -947,7 +960,7 @@ internal class Program
     private static void Main(string[] args)
     {
 
-        /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
+        bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
             bool areEqual = true;
             // Check if both arrays are null or reference the same array
             if (ReferenceEquals(matrix1, matrix2)) areEqual = true;
@@ -976,7 +989,7 @@ internal class Program
             }
 
             return areEqual;
-        } */
+        }
         
         // DD Test 8
         double[,] matrixJ = new double[6, 6] {
@@ -1487,26 +1500,30 @@ internal class Program
 
         var dm = new DistanceMatrix();
         var (nodeArray, distMatrix, infoMatrix) = dm.BuildNormalMatrices();
+        int countDistMatrix1 = 0;
+        for (int row = 0; row < distMatrix.GetLength(0); row++)
+        {
+            for (int col = 0; col < distMatrix.GetLength(1); col++)
+            {   
+                
+                if (distMatrix[row, col] != 0) {
+                    countDistMatrix1++;
+                }
+            }
+        }
+        Console.WriteLine("num non zero edges in distMatrix1:" + Convert.ToString(countDistMatrix1));
         var (nodeArrayOWS, distMatrixOWS, infoMatrixOWS) = dm.BuildOWSMatrices(nodeArray, distMatrix, infoMatrix);
-        int count = 0;
+        int countDistMatrix2 = 0;
         for (int row = 0; row < distMatrixOWS.GetLength(0); row++)
         {
             for (int col = 0; col < distMatrixOWS.GetLength(1); col++)
             {   
-                Console.Write(infoMatrixOWS[row, col]); //output the value
-                if (infoMatrixOWS[row, col] != 0) {
-                    count++;
-                }
-                if (col != distMatrixOWS.Length - 1)
-                {
-                    Console.Write(", ");
+                if (distMatrix[row, col] != 0) {
+                    countDistMatrix2++;
                 }
             }
-            Console.WriteLine();
         }
-        Console.WriteLine();
-
-        Console.WriteLine(count);
+        Console.WriteLine("num non zero edges in distMatrix2:" + Convert.ToString(countDistMatrix2));
     }   
 
 
