@@ -17,9 +17,9 @@ public class DistanceMatrix
     private double stairsSlowVelocity;
     private double congestedVelocity;
     private double liftVelocity;
-    private bool useTimeForCalculationUserSetting;    
-    private bool canUseTimeForCalculationDBSetting;
-    private bool useTimeForCalculation;
+    private bool useTimeOfDayForCalculationUser;    
+    private bool useTimeOfDayForCalculationDB;
+    private bool useTimeOfDayForCalculation;
 
     // constructors
     public DistanceMatrix() {
@@ -34,12 +34,12 @@ public class DistanceMatrix
 
         // now check settings
         // for now, just set values here, later take from database
-        useTimeForCalculationUserSetting = true; // sourced from user settings
-        canUseTimeForCalculationDBSetting = true; // sourced from DB settings
+        useTimeOfDayForCalculationUser = true; // sourced from user settings
+        useTimeOfDayForCalculationDB = true; // sourced from DB settings
 
         // if DB sets it as false, then it is false, otherwise, follow user's settings
         // this is just 'and' gate
-        useTimeForCalculation = useTimeForCalculationUserSetting && canUseTimeForCalculationDBSetting;
+        useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
     }
 
     // methods
@@ -231,7 +231,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
                 realVelocity = insideVelocity;
                 break;
             case 'S': // stairs (up or down)
-                if (NearCongestionTime() && useTimeForCalculation) {
+                if (NearCongestionTime() && useTimeOfDayForCalculation) {
                     realVelocity = stairsSlowVelocity;
                 }
                 else {
@@ -239,7 +239,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
                 }
                 break;
             case 'C': // commonly congested path (inside or outside) during congestion times
-                if (NearCongestionTime() && useTimeForCalculation) {
+                if (NearCongestionTime() && useTimeOfDayForCalculation) {
                     realVelocity = congestedVelocity;
                 }
                 else {
