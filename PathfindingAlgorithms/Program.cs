@@ -974,6 +974,41 @@ public class DatabaseHelper
 
         return velocityValue;
     }
+
+    /**
+    This function uses SQL to get all congestion times and return a list of time spans
+    representing this information.
+    */
+    public List<TimeSpan> GetCongestionTimes() {
+
+        var (timeFields, timeValues) = ExecuteSelect("SELECT * FROM tblsetting WHERE setting_name like \"congestionTime%\"");
+
+        //get number of times
+        int numberOfTimes = timeValues.Count;
+
+        // just in case the order has been changed, get indexes manually
+        int timeFieldIndex = timeFields.IndexOf("setting_value");
+
+        List<TimeSpan> congestionTimes = [];
+
+        for (int i = 0; i < numberOfTimes; i++) {
+
+            // get time from time values
+            // "" + so that there isnt a warning about possibly null value being set to non nullable type
+            string time = "" + Convert.ToString(timeValues[i][timeFieldIndex]); // returns a time
+
+            // now need to get out of weird format and convert into a timespan that gets appended to list of time spans
+            // format is 00,00,00
+            int hours = Convert.ToInt32(time.Substring(0, 2)); // start or character 0 and take two characters
+            int minutes = Convert.ToInt32(time.Substring(3, 2)); // start or character 3 and take two characters
+            int seconds = Convert.ToInt32(time.Substring(6, 2)); // start or character 6 and take two characters
+
+            congestionTimes.Add(new TimeSpan(hours, minutes, seconds));            
+
+        }
+
+        return congestionTimes;
+    }
 }
 
 internal class Program
@@ -1544,7 +1579,21 @@ internal class Program
         bool x = db.GetTimeOfDayDB();
         Console.WriteLine(x); */
 
-        var dm = new DistanceMatrix();
-        dm.ShowVelocities();
+        /* var dm = new DistanceMatrix();
+        dm.ShowVelocities(); */
+        var db = new DatabaseHelper();
+        List<TimeSpan> congestionTimes = db.GetCongestionTimes();
+        /* [
+            new TimeSpan(11,0,0),   // 11:00
+            new TimeSpan(11,20,0),  // 11:20
+            new TimeSpan(13,20,0),  // 13:20
+            new TimeSpan(14,0,0),   // 14:00
+            new TimeSpan(15,0,0),   // 15:00
+        ]; */
+
+        for (int i = 0; i < congestionTimes.Count(); i++) {
+            Console.WriteLine(congestionTimes[i]);
+        }
+        //NOW CHECK WORKS FOR FUNCTION
     }   
 }
