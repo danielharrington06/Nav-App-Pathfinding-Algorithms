@@ -38,12 +38,8 @@ public class DistanceMatrix
         canUseTimeForCalculationDBSetting = true; // sourced from DB settings
 
         // if DB sets it as false, then it is false, otherwise, follow user's settings
-        if (canUseTimeForCalculationDBSetting == false) {
-            useTimeForCalculation = false;
-        }
-        else {
-            useTimeForCalculation = useTimeForCalculationUserSetting;
-        }
+        // this is just 'and' gate
+        useTimeForCalculation = useTimeForCalculationUserSetting && canUseTimeForCalculationDBSetting;
     }
 
     // methods
@@ -959,7 +955,7 @@ internal class Program
     private static void Main(string[] args)
     {
 
-        bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
+        /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
             bool areEqual = true;
             // Check if both arrays are null or reference the same array
             if (ReferenceEquals(matrix1, matrix2)) areEqual = true;
@@ -988,7 +984,7 @@ internal class Program
             }
 
             return areEqual;
-        }
+        } */
         
         // DD Test 8
         double[,] matrixJ = new double[6, 6] {
