@@ -12,16 +12,6 @@ public class DistanceMatrix
 {
     
     // fields
-    private double outsideVelocity;
-    private double outsideSlowVelocity;
-    private double insideVelocity;
-    private double insideSlowVelocity;
-    private double stairsVelocity;
-    private double stairsSlowVelocity;
-    private double congestedVelocity;
-    private double congestedSlowVelocity;
-    private double liftVelocity;
-    private double liftSlowVelocity;
     private double[,] edgeVelocities = new double[5, 2];
     private char[] edgeTypes = new char[5];
 
@@ -34,21 +24,26 @@ public class DistanceMatrix
         
         // write edge types for array
         edgeTypes = ['O', 'I', 'C', 'S', 'L'];
-        outsideVelocity = 1.3;
-        outsideSlowVelocity = 1.3;
-        insideVelocity = 1.2;
-        insideSlowVelocity = 1.2;
-        stairsVelocity = 1; // need to check and confirm
-        stairsSlowVelocity = 0.5; // need to check and confirm
-        congestedVelocity = 1.2; // need to check and confirm
-        congestedSlowVelocity = 0.4;
-        liftVelocity = 1;
-        liftSlowVelocity = 1;
+
+        // get velocities
+        DatabaseHelper db = new DatabaseHelper();
+
+        // go through all 5 x 2 values and place in edge Velocities from DB
+        edgeVelocities[0, 0] = db.GetVelocityValue(edgeTypes[0], false); // outside normal
+        edgeVelocities[0, 1] = db.GetVelocityValue(edgeTypes[0], true); // outside slow
+        edgeVelocities[1, 0] = db.GetVelocityValue(edgeTypes[1], false); // inside normal
+        edgeVelocities[1, 1] = db.GetVelocityValue(edgeTypes[1], true); // inside slow
+        edgeVelocities[2, 0] = db.GetVelocityValue(edgeTypes[2], false); // commonly congested normal
+        edgeVelocities[2, 1] = db.GetVelocityValue(edgeTypes[2], true); // commonly congested slow
+        edgeVelocities[3, 0] = db.GetVelocityValue(edgeTypes[3], false); // stairs normal
+        edgeVelocities[3, 1] = db.GetVelocityValue(edgeTypes[3], true); // stairs slow
+        edgeVelocities[4, 0] = db.GetVelocityValue(edgeTypes[4], false); // lift normal
+        edgeVelocities[4, 1] = db.GetVelocityValue(edgeTypes[4], true); // lift slow
 
         // now check settings
         // for now, just set values here, later take from database
         useTimeOfDayForCalculationUser = true; // sourced from user settings
-        useTimeOfDayForCalculationDB = true; // sourced from DB settings
+        useTimeOfDayForCalculationDB = db.GetTimeOfDayDB(); // sourced from DB settings
 
         // if DB sets it as false, then it is false, otherwise, follow user's settings
         // this is just 'and' gate
@@ -56,6 +51,12 @@ public class DistanceMatrix
     }
 
     // methods
+
+    public void ShowVelocities() {
+        foreach (var x in edgeVelocities) {
+            Console.WriteLine(x);
+        }
+    }
 
     /**
     This function calls functions that queries the database to create the non directional
@@ -201,6 +202,10 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         // provided that it is n x n
         int numberOfNodes = numRows;
 
+        // figure out if slow (congested) values for velocity should be used
+        // calculated once so not repeating each loop
+        bool useSlowVal = NearCongestionTime() && useTimeOfDayForCalculation;
+
         // initialise temp variables within loop
         double distance; // in metres
         double time; // in seconds
@@ -215,12 +220,13 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
                 distance = distDistMatrix[rowNum, colNum];
                 if (distance > 0) {
                     info = infoMatrix[rowNum, colNum];
-                    time = EstimateTimeFromDistance(distance, info);
+                    time = EstimateTimeFromDistance(distance, info, useSlowVal);
                     timeDistMatrix[rowNum, colNum] = time;
                 }
                 
             }
         }
+
         return timeDistMatrix;
     }
 
@@ -230,60 +236,20 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
     It takes both these values, considers what type of path it is, so it can then assign a velocity, then uses the
     time = distance / speed formula to return a value for time.
     */
-    private double EstimateTimeFromDistance(double distance, char info) {
+    private double EstimateTimeFromDistance(double distance, char info, bool useSlowVal) {
         
         double realVelocity;
         double time;
+        
+        // get index of the edge type (info)
+        int edgeTypeIndex = Array.IndexOf(edgeTypes, info);
+        
+        // get velocity from edge velocities matrix
+        realVelocity = edgeVelocities[edgeTypeIndex, Convert.ToInt32(useSlowVal)];
 
-        switch (info)
-        {
-            case 'O': // outside path
-                if (NearCongestionTime() && useTimeOfDayForCalculation) {
-                    realVelocity = outsideSlowVelocity;
-                }
-                else {
-                    realVelocity = outsideVelocity;
-                }
-                break;
-            case 'I': // inside corridor
-                if (NearCongestionTime() && useTimeOfDayForCalculation) {
-                    realVelocity = insideSlowVelocity;
-                }
-                else {
-                    realVelocity = insideVelocity;
-                }
-                break;
-            case 'S': // stairs (up or down)
-                if (NearCongestionTime() && useTimeOfDayForCalculation) {
-                    realVelocity = stairsSlowVelocity;
-                }
-                else {
-                    realVelocity = stairsVelocity;
-                }
-                break;
-            case 'C': // commonly congested path (inside or outside) during congestion times
-                if (NearCongestionTime() && useTimeOfDayForCalculation) {
-                    realVelocity = congestedSlowVelocity;
-                }
-                else {
-                    realVelocity = congestedVelocity; // not necessarily inside, but if commonly congested,
-                                                   // then likely will be the speed of inside
-                }
-                break;
-            case 'L': // lift - distance in DB chosen as number of seconds lift takes
-                if (NearCongestionTime() && useTimeOfDayForCalculation) {
-                    realVelocity = liftSlowVelocity;
-                }
-                else {
-                    realVelocity = liftVelocity;
-                }
-                break;
-            default:
-                realVelocity = outsideVelocity; // this should never execute
-                Console.WriteLine($"Invalid info code '{info}'for value with distance '{distance}'");
-                break;
-        }
+        // use t = s / v formula
         time = distance/realVelocity;
+
         return Math.Round(time, 1);
     }
 
@@ -313,7 +279,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
 
         for (int i = 0; i < congestionTimes.Count; i++) {
             // if current time is within 1 min 30 of congestionTimes[i]
-            if (currentTime < congestionTimes[i] + margin && currentTime > congestionTimes[i] - margin) {
+            if (currentTime < congestionTimes[i] + margin) {
                 isNearCongestionTime = true;
                 break;
             }
@@ -370,7 +336,6 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         }
         
         return timeDistMatrix;
-
     }
 }
 
@@ -470,6 +435,7 @@ public class Dijkstra
             }
             currentNode = lowestValIndex;
         }
+
         return dijkstraDistances;
     }
 
@@ -989,6 +955,24 @@ public class DatabaseHelper
         else {
             return false; // play it safe by returning false
         }
+    }
+
+    /**
+    This function uses SQL to source the velocity for the specified edge type and a boolean
+    representing the use (1) or not (0) of a slower velocity.
+    */
+    public double GetVelocityValue(char edgeType, bool useSlowVal) {
+        
+        double velocityValue;
+
+        if (!useSlowVal) { // normal velocity
+            velocityValue = ExecuteScalarSelect("SELECT normal_velocity FROM tbledgetype WHERE edge_type_id = \"" + Convert.ToString(edgeType) + "\"");
+        }
+        else { // slow/congested velocity
+            velocityValue = ExecuteScalarSelect("SELECT congestion_velocity FROM tbledgetype WHERE edge_type_id = \"" + Convert.ToString(edgeType) + "\"");
+        }
+
+        return velocityValue;
     }
 }
 
@@ -1555,11 +1539,12 @@ internal class Program
             }
         }
         Console.WriteLine(count); */
-
+/* 
         var db = new DatabaseHelper();
         bool x = db.GetTimeOfDayDB();
-        Console.WriteLine(x);
+        Console.WriteLine(x); */
+
+        var dm = new DistanceMatrix();
+        dm.ShowVelocities();
     }   
-
-
 }
