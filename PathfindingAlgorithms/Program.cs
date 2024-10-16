@@ -22,6 +22,9 @@ public class DistanceMatrix
     private double congestedSlowVelocity;
     private double liftVelocity;
     private double liftSlowVelocity;
+    private double[,] edgeVelocities = new double[5, 2];
+    private char[] edgeTypes = new char[5];
+
     private bool useTimeOfDayForCalculationUser;    
     private bool useTimeOfDayForCalculationDB;
     private bool useTimeOfDayForCalculation;
@@ -29,7 +32,8 @@ public class DistanceMatrix
     // constructors
     public DistanceMatrix() {
         
-        // like this for now, but later query database
+        // write edge types for array
+        edgeTypes = ['O', 'I', 'C', 'S', 'L'];
         outsideVelocity = 1.3;
         outsideSlowVelocity = 1.3;
         insideVelocity = 1.2;
@@ -234,10 +238,20 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         switch (info)
         {
             case 'O': // outside path
-                realVelocity = outsideVelocity;
+                if (NearCongestionTime() && useTimeOfDayForCalculation) {
+                    realVelocity = outsideSlowVelocity;
+                }
+                else {
+                    realVelocity = outsideVelocity;
+                }
                 break;
             case 'I': // inside corridor
-                realVelocity = insideVelocity;
+                if (NearCongestionTime() && useTimeOfDayForCalculation) {
+                    realVelocity = insideSlowVelocity;
+                }
+                else {
+                    realVelocity = insideVelocity;
+                }
                 break;
             case 'S': // stairs (up or down)
                 if (NearCongestionTime() && useTimeOfDayForCalculation) {
@@ -249,18 +263,23 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
                 break;
             case 'C': // commonly congested path (inside or outside) during congestion times
                 if (NearCongestionTime() && useTimeOfDayForCalculation) {
-                    realVelocity = congestedVelocity;
+                    realVelocity = congestedSlowVelocity;
                 }
                 else {
-                    realVelocity = insideVelocity; // not necessarily inside, but if commonly congested,
-                                                    // then likely will be the speed of inside
+                    realVelocity = congestedVelocity; // not necessarily inside, but if commonly congested,
+                                                   // then likely will be the speed of inside
                 }
                 break;
             case 'L': // lift - distance in DB chosen as number of seconds lift takes
-                realVelocity = liftVelocity;
+                if (NearCongestionTime() && useTimeOfDayForCalculation) {
+                    realVelocity = liftSlowVelocity;
+                }
+                else {
+                    realVelocity = liftVelocity;
+                }
                 break;
             default:
-                realVelocity = outsideVelocity;
+                realVelocity = outsideVelocity; // this should never execute
                 Console.WriteLine($"Invalid info code '{info}'for value with distance '{distance}'");
                 break;
         }
