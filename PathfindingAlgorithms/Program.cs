@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
 using MySql.Data.MySqlClient.Authentication; // include MySQL package
 
@@ -948,6 +949,20 @@ public class DatabaseHelper
 
         return ExecuteSelect("SELECT * FROM tbledge WHERE one_way = true");
     }
+
+    /**
+    This function uses SQL to source the boolean value controlling whether the time of day
+    can be used in calculations for estimations of time.
+    */
+    public bool GetTimeOfDayDB() {
+        double boolValue = ExecuteScalarSelect("SELECT setting_value FROM tblsetting WHERE setting_name = \"useTimeOfDayForCalculationDB\"");
+        if (boolValue == 0 || boolValue == 1) {
+            return Convert.ToBoolean(boolValue);
+        }
+        else {
+            return false; // play it safe by returning false
+        }
+    }
 }
 
 internal class Program
@@ -1493,7 +1508,7 @@ internal class Program
         /* var db = new DatabaseHelper();
         db.ShowSelectResult(db.GetNodes()); */
 
-        var dm = new DistanceMatrix();
+        /* var dm = new DistanceMatrix();
         var (nodeArray, distMatrix, infoMatrix) = dm.BuildNormalMatrices();
         var (nodeArrayOWS, distMatrixOWS, infoMatrixOWS) = dm.BuildOWSMatrices(nodeArray, distMatrix, infoMatrix);
         int count = 0;
@@ -1512,7 +1527,11 @@ internal class Program
                 }
             }
         }
-        Console.WriteLine(count);
+        Console.WriteLine(count); */
+
+        var db = new DatabaseHelper();
+        bool x = db.GetTimeOfDayDB();
+        Console.WriteLine(x);
     }   
 
 
