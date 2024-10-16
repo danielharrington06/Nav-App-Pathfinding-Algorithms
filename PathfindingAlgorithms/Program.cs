@@ -12,12 +12,16 @@ public class DistanceMatrix
 {
     
     // fields
-    private double defaultVelocity;
+    private double outsideVelocity;
+    private double outsideSlowVelocity;
     private double insideVelocity;
+    private double insideSlowVelocity;
     private double stairsVelocity;
     private double stairsSlowVelocity;
     private double congestedVelocity;
+    private double congestedSlowVelocity;
     private double liftVelocity;
+    private double liftSlowVelocity;
     private bool useTimeOfDayForCalculationUser;    
     private bool useTimeOfDayForCalculationDB;
     private bool useTimeOfDayForCalculation;
@@ -26,12 +30,16 @@ public class DistanceMatrix
     public DistanceMatrix() {
         
         // like this for now, but later query database
-        defaultVelocity = 1.3;
+        outsideVelocity = 1.3;
+        outsideSlowVelocity = 1.3;
         insideVelocity = 1.2;
+        insideSlowVelocity = 1.2;
         stairsVelocity = 1; // need to check and confirm
         stairsSlowVelocity = 0.5; // need to check and confirm
-        congestedVelocity = 0.4; // need to check and confirm
+        congestedVelocity = 1.2; // need to check and confirm
+        congestedSlowVelocity = 0.4;
         liftVelocity = 1;
+        liftSlowVelocity = 1;
 
         // now check settings
         // for now, just set values here, later take from database
@@ -226,7 +234,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         switch (info)
         {
             case 'O': // outside path
-                realVelocity = defaultVelocity;
+                realVelocity = outsideVelocity;
                 break;
             case 'I': // inside corridor
                 realVelocity = insideVelocity;
@@ -252,7 +260,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
                 realVelocity = liftVelocity;
                 break;
             default:
-                realVelocity = defaultVelocity;
+                realVelocity = outsideVelocity;
                 Console.WriteLine($"Invalid info code '{info}'for value with distance '{distance}'");
                 break;
         }
