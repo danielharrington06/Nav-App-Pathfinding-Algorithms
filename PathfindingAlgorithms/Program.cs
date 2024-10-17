@@ -257,35 +257,32 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
     This function is called to check how near the current time is to a list of congestion times.
     Makes use of the TimeSpan datatypes to represent times in a day
     */
-    private bool NearCongestionTime() {
+    public bool NearCongestionTime() {
 
         bool isNearCongestionTime = false;
         // using timespans as times of the day
-        // later source from database
-        List<TimeSpan> congestionTimes =
-        [
-            new TimeSpan(11,0,0),   // 11:00
-            new TimeSpan(11,20,0),  // 11:20
-            new TimeSpan(13,20,0),  // 13:20
-            new TimeSpan(14,0,0),   // 14:00
-            new TimeSpan(15,0,0),   // 15:00
-        ];
+        // source from database
+        DatabaseHelper db = new DatabaseHelper();
+
+        List<TimeSpan> congestionTimes = db.GetCongestionTimes(); // these are the busy corridor times
 
         // later source from database
-        TimeSpan margin = new TimeSpan(0,1,30); // 1 min 30
+        TimeSpan congestionDuration = db.GetCongestionDuration(); // 3 mins
 
         // get current time of day
         TimeSpan currentTime = DateTime.Now.TimeOfDay;
 
         for (int i = 0; i < congestionTimes.Count; i++) {
-            // if current time is within 1 min 30 of congestionTimes[i]
-            if (currentTime < congestionTimes[i] + margin) {
+            // if current time is within allowed duration of congestionTimes[i]
+            // current time has to be greater than the start of the congestion time
+            // and less than congestion time + congestion duration
+            if (currentTime >= congestionTimes[i] && currentTime <= congestionTimes[i] + congestionDuration) {
                 isNearCongestionTime = true;
                 break;
             }
         }
 
-        return isNearCongestionTime; //needs to be changed back once tested
+        return isNearCongestionTime;
     }
 
     /**
@@ -1617,7 +1614,16 @@ internal class Program
             Console.WriteLine(congestionTimes[i]);
         }*/
 
-        Console.WriteLine(db.GetCongestionDuration());
+        /* Console.WriteLine(dm.NearCongestionTime());
+
+        // method 1
+        var (nodeArray1, distMatrix1, infoMatrix1) = dm.BuildNormalMatrices();
+
+        // method 2
+        (int[] x, double[,] y, char[,] z) result = dm.BuildNormalMatrices();
+        int[] nodeArray2 = result.x;
+        double[,] distMatrix2 = result.y;
+        char[,] infoMatrix2 = result.z; */
         
     }   
 }
