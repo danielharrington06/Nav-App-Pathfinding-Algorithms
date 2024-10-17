@@ -41,7 +41,6 @@ public class DistanceMatrix
         edgeVelocities[4, 1] = db.GetVelocityValue(edgeTypes[4], true); // lift slow
 
         // now check settings
-        // for now, just set values here, later take from database
         useTimeOfDayForCalculationUser = true; // sourced from user settings
         useTimeOfDayForCalculationDB = db.GetTimeOfDayDB(); // sourced from DB settings
 
@@ -260,13 +259,13 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
     public bool NearCongestionTime() {
 
         bool isNearCongestionTime = false;
+
         // using timespans as times of the day
         // source from database
         DatabaseHelper db = new DatabaseHelper();
 
+        // get congestion times and duration
         List<TimeSpan> congestionTimes = db.GetCongestionTimes(); // these are the busy corridor times
-
-        // later source from database
         TimeSpan congestionDuration = db.GetCongestionDuration(); // 3 mins
 
         // get current time of day
@@ -309,7 +308,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         int numberOfNodes = numRows;
 
         //get setting
-        bool stepFreeAccess = false; // later get this from other game object
+        bool stepFreeAccess = false; // later get this from user settings
 
         //saves computation time only checking this once instead of for each iteration
         if (stepFreeAccess) { // so get rid of edges for stairs
