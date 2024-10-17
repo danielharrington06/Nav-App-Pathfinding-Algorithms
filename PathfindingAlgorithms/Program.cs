@@ -999,9 +999,9 @@ public class DatabaseHelper
 
             // now need to get out of weird format and convert into a timespan that gets appended to list of time spans
             // format is 00,00,00
-            int hours = Convert.ToInt32(time.Substring(0, 2)); // start or character 0 and take two characters
-            int minutes = Convert.ToInt32(time.Substring(3, 2)); // start or character 3 and take two characters
-            int seconds = Convert.ToInt32(time.Substring(6, 2)); // start or character 6 and take two characters
+            int hours = Convert.ToInt32(time.Substring(0, 2)); // start at character 0 and take two characters
+            int minutes = Convert.ToInt32(time.Substring(3, 2)); // start at character 3 and take two characters
+            int seconds = Convert.ToInt32(time.Substring(6, 2)); // start at character 6 and take two characters
 
             congestionTimes.Add(new TimeSpan(hours, minutes, seconds));            
 
@@ -1009,12 +1009,34 @@ public class DatabaseHelper
 
         return congestionTimes;
     }
+
+/**
+This function uses SQL to get the margin time (amount of time after a specified congestion time for
+which the corridor is still busy.
+*/
+public TimeSpan GetCongestionDuration() {
+    // get margin time from sql query
+    var (timeFields, timeValues) = ExecuteSelect("SELECT setting_value FROM tblsetting WHERE setting_name = \"congestionDuration\"");
+    string congestionDuration = "" + Convert.ToString(timeValues[0][0]);
+    // now need to get out of weird format and convert into a timespan that gets appended to list of time spans
+    // format is 00,00,00
+    int hours = Convert.ToInt32(congestionDuration.Substring(0, 2)); // start at character 0 and take two characters
+    int minutes = Convert.ToInt32(congestionDuration.Substring(3, 2)); // start at character 3 and take two characters
+    int seconds = Convert.ToInt32(congestionDuration.Substring(6, 2)); // start at character 6 and take two characters
+    // place nicely here
+    TimeSpan congestionDurationTS = new TimeSpan(hours, minutes, seconds);
+    return congestionDurationTS;
+}
 }
 
 internal class Program
 {
     private static void Main(string[] args)
     {
+        DistanceMatrix dm = new DistanceMatrix();
+        Dijkstra dk = new Dijkstra();
+        Floyd fl = new Floyd();
+        DatabaseHelper db = new DatabaseHelper();
 
         /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
             bool areEqual = true;
@@ -1581,7 +1603,7 @@ internal class Program
 
         /* var dm = new DistanceMatrix();
         dm.ShowVelocities(); */
-        var db = new DatabaseHelper();
+        /* var db = new DatabaseHelper();
         List<TimeSpan> congestionTimes = db.GetCongestionTimes();
         /* [
             new TimeSpan(11,0,0),   // 11:00
@@ -1589,11 +1611,13 @@ internal class Program
             new TimeSpan(13,20,0),  // 13:20
             new TimeSpan(14,0,0),   // 14:00
             new TimeSpan(15,0,0),   // 15:00
-        ]; */
+        ]; 
 
         for (int i = 0; i < congestionTimes.Count(); i++) {
             Console.WriteLine(congestionTimes[i]);
-        }
-        //NOW CHECK WORKS FOR FUNCTION
+        }*/
+
+        Console.WriteLine(db.GetCongestionDuration());
+        
     }   
 }
