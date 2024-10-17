@@ -271,7 +271,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
 
         // get current time of day
         //TimeSpan currentTime = DateTime.Now.TimeOfDay;
-        TimeSpan currentTime = new TimeSpan(10,0,0);
+        TimeSpan currentTime = new TimeSpan(14,59,59);
         Console.WriteLine(currentTime);
 
         for (int i = 0; i < congestionTimes.Count; i++) {
