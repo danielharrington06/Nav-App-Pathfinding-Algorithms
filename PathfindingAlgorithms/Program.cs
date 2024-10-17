@@ -270,9 +270,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         TimeSpan congestionDuration = db.GetCongestionDuration(); // 3 mins
 
         // get current time of day
-        //TimeSpan currentTime = DateTime.Now.TimeOfDay;
-        TimeSpan currentTime = new TimeSpan(14,59,59);
-        Console.WriteLine(currentTime);
+        TimeSpan currentTime = DateTime.Now.TimeOfDay;
 
         for (int i = 0; i < congestionTimes.Count; i++) {
             // if current time is within allowed duration of congestionTimes[i]
@@ -1358,7 +1356,7 @@ internal class Program
         {
             Console.WriteLine("Unsuccessful Test");
         }*/
-        /* DistanceMatrix distmat = new DistanceMatrix();
+        DistanceMatrix distmat = new DistanceMatrix();
         double[,] matrixResult = distmat.ConfigureTimeDistMatrix(matrixD, matrixE);
         for (int row = 0; row < matrixResult.GetLength(0); row++)
         {
@@ -1395,7 +1393,7 @@ internal class Program
         else
         {
             Console.WriteLine("Unsuccessful Test");
-        } */
+        }
 
         /* DistanceMatrix distmat = new DistanceMatrix();
         double[,] matrixResult = distmat.AdjustStairsLifts(matrixD, matrixE);
@@ -1628,6 +1626,6 @@ internal class Program
         double[,] distMatrix2 = result.y;
         char[,] infoMatrix2 = result.z; */
 
-        Console.WriteLine(dm.NearCongestionTime());
+        //Console.WriteLine(dm.NearCongestionTime());
     }   
 }
