@@ -8,7 +8,7 @@ using MySql.Data.MySqlClient;
 using MySql.Data.MySqlClient.Authentication; // include MySQL package
 
 
-public class DistanceMatrix
+public class MatrixBuilder
 {
     
     // fields
@@ -20,7 +20,7 @@ public class DistanceMatrix
     private bool useTimeOfDayForCalculation;
 
     // constructors
-    public DistanceMatrix() {
+    public MatrixBuilder() {
         
         // write edge types for array
         edgeTypes = ['O', 'I', 'C', 'S', 'L'];
@@ -336,7 +336,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
 }
 
 
-public class Dijkstra 
+public class DijkstraPathfinder
 {
 
     // fields
@@ -344,7 +344,7 @@ public class Dijkstra
 
 
     // constructors
-    public Dijkstra(){
+    public DijkstraPathfinder(){
         timeSecsModifier = 0;
     }
 
@@ -631,14 +631,14 @@ public class Dijkstra
     }
 }
 
-public class Floyd 
+public class FloydPathfinder 
 {
 
     // fields
 
 
     // constructors
-    public Floyd(){
+    public FloydPathfinder(){
     }
 
 
@@ -1030,9 +1030,9 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        DistanceMatrix dm = new DistanceMatrix();
-        Dijkstra dk = new Dijkstra();
-        Floyd fl = new Floyd();
+        MatrixBuilder mb = new MatrixBuilder();
+        DijkstraPathfinder dp = new DijkstraPathfinder();
+        FloydPathfinder fp = new FloydPathfinder();
         DatabaseHelper db = new DatabaseHelper();
 
         /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
