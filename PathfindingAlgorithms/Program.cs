@@ -714,7 +714,7 @@ public class FloydPathfinder
 public class DatabaseHelper
 {
     // fields
-    public  MySqlConnection connection;
+    public MySqlConnection connection;
     private string server;
     private string database;
     private string uid;
