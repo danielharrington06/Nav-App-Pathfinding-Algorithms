@@ -81,7 +81,7 @@ public class DistanceMatrix
         }
 
         // initialise distance matrix
-        double[,] distDistMatrix = new double[numberOfNodes, numberOfNodes];
+        double[,] distanceMatrix = new double[numberOfNodes, numberOfNodes];
 
         // initialise info matrix
         char[,] infoMatrix = new char[numberOfNodes, numberOfNodes];
@@ -118,8 +118,8 @@ public class DistanceMatrix
             // now update matrices
 
             // put in both 1, 2 and 2, 1 because non directional            
-            distDistMatrix[node1Index, node2Index] = weightVal;
-            distDistMatrix[node2Index, node1Index] = weightVal;
+            distanceMatrix[node1Index, node2Index] = weightVal;
+            distanceMatrix[node2Index, node1Index] = weightVal;
 
             // put in both 1, 2 and 2, 1 because non directional            
             infoMatrix[node1Index, node2Index] = infoVal;
@@ -135,17 +135,17 @@ public class DistanceMatrix
             }
         }     
 
-        return (nodeArray, distDistMatrix, infoMatrix);
+        return (nodeArray, distanceMatrix, infoMatrix);
     }
 
 /**
 This function takes the results of the above function (node array, dist matrix, info amatrix)
 and sets all values to zero where the one way system applies.
 */
-public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] distDistMatrix, char[,] infoMatrix) {
+public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] distanceMatrix, char[,] infoMatrix) {
 
     // clone matrices as they got passed by ref not by val
-    var distDistMatrixOWS = (double[,])distDistMatrix.Clone();
+    var distanceMatrixOWS = (double[,])distanceMatrix.Clone();
     var infoMatrixOWS = (char[,])infoMatrix.Clone();
     
     // get all one-way edges from db
@@ -170,32 +170,32 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         int node2Index = Array.IndexOf(nodeArray, node2ID);
 
         // set the edge from node 2 to node 1 to 0 in matrices
-        distDistMatrixOWS[node2Index, node1Index] = 0;
+        distanceMatrixOWS[node2Index, node1Index] = 0;
         infoMatrixOWS[node2Index, node1Index] = '0';
     } 
 
-    return (nodeArray, distDistMatrixOWS, infoMatrixOWS);
+    return (nodeArray, distanceMatrixOWS, infoMatrixOWS);
 }
 
     /**
-    This functions configures a time distance matrix so that pathfinding can be carried out.
+    This functions configures a time matrix so that pathfinding can be carried out.
     It takes two matrices - the first is a distance distance matrix representing the connections between
     nodes on a graph in metres, and the second represnting what type of path each edge is.
     It then estimates time for each non 0 edge in the matrix, also considering the time of day if this is enabled
     in the user settings and database settings.
     */
-    public double[,] ConfigureTimeDistMatrix(double[,] distDistMatrix, char[,] infoMatrix) {
+    public double[,] ConfigureTimeDistMatrix(double[,] distanceMatrix, char[,] infoMatrix) {
 
-        int numRows = distDistMatrix.GetLength(0);
-        int numColumns = distDistMatrix.GetLength(1);
+        int numRows = distanceMatrix.GetLength(0);
+        int numColumns = distanceMatrix.GetLength(1);
         // validate the matrix input by ensuring that it is n x n
         // achieved by finding number of rows and columns
         if (numRows != numColumns) {
-            throw new FormatException($"The input '{distDistMatrix}' does not have an equal number of rows as columns.");
+            throw new FormatException($"The input '{distanceMatrix}' does not have an equal number of rows as columns.");
         }
         // validate the second matrix input by ensuring that it is also n x n
         else if (infoMatrix.GetLength(0) != numRows || infoMatrix.GetLength(1) != numColumns) {
-            throw new FormatException($"The inputs '{distDistMatrix}' and '{infoMatrix}' do not have equal dimensions.");
+            throw new FormatException($"The inputs '{distanceMatrix}' and '{infoMatrix}' do not have equal dimensions.");
         }
 
         // provided that it is n x n
@@ -211,26 +211,26 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         char info;
 
         // initialise returned matrix
-        double[,] timeDistMatrix = new double[numRows, numColumns];
+        double[,] timeMatrix = new double[numRows, numColumns];
 
         for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
             for (int colNum = 0; colNum < numberOfNodes; colNum++) {
 
-                distance = distDistMatrix[rowNum, colNum];
+                distance = distanceMatrix[rowNum, colNum];
                 if (distance > 0) {
                     info = infoMatrix[rowNum, colNum];
                     time = EstimateTimeFromDistance(distance, info, useSlowVal);
-                    timeDistMatrix[rowNum, colNum] = time;
+                    timeMatrix[rowNum, colNum] = time;
                 }
                 
             }
         }
 
-        return timeDistMatrix;
+        return timeMatrix;
     }
 
     /**
-    This function does the individual time estimation part of configuring the time distance matrix for a single
+    This function does the individual time estimation part of configuring the time matrix for a single
     distance and info instance.
     It takes both these values, considers what type of path it is, so it can then assign a velocity, then uses the
     time = distance / speed formula to return a value for time.
@@ -285,23 +285,23 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
     }
 
     /**
-    This function is used to adjust the time distance matrix so that if step-free access is selected
+    This function is used to adjust the time matrix so that if step-free access is selected
     then stairs are not considered when pathfinding. The opposite is true so that people who can use
     stairs get directed through them.
     It iteratively looks through the info matrix for either S or L and adjusts the matrix correctly.
     */
-    public double[,] AdjustStairsLifts(double[,] timeDistMatrix, char[,] infoMatrix) {
+    public double[,] AdjustStairsLifts(double[,] timeMatrix, char[,] infoMatrix) {
 
-        int numRows = timeDistMatrix.GetLength(0);
-        int numColumns = timeDistMatrix.GetLength(1);
+        int numRows = timeMatrix.GetLength(0);
+        int numColumns = timeMatrix.GetLength(1);
         // validate the matrix input by ensuring that it is n x n
         // achieved by finding number of rows and columns
         if (numRows != numColumns) {
-            throw new FormatException($"The input '{timeDistMatrix}' does not have an equal number of rows as columns.");
+            throw new FormatException($"The input '{timeMatrix}' does not have an equal number of rows as columns.");
         }
         // validate the second matrix input by ensuring that it is also n x n
-        else if (timeDistMatrix.GetLength(0) != numColumns || infoMatrix.GetLength(1) != numRows) {
-            throw new FormatException($"The inputs '{timeDistMatrix}' and '{infoMatrix}' do not have equal dimensions.");
+        else if (timeMatrix.GetLength(0) != numColumns || infoMatrix.GetLength(1) != numRows) {
+            throw new FormatException($"The inputs '{timeMatrix}' and '{infoMatrix}' do not have equal dimensions.");
         }
 
         // provided that it is n x n
@@ -315,7 +315,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
             for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
                 for (int colNum = 0; colNum < numberOfNodes; colNum++) {
                     if (infoMatrix[rowNum, colNum] == 'S') {
-                        timeDistMatrix[rowNum, colNum] = 0;
+                        timeMatrix[rowNum, colNum] = 0;
                     }
                 }
             }
@@ -325,13 +325,13 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
             for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
                 for (int colNum = 0; colNum < numberOfNodes; colNum++) {
                     if (infoMatrix[rowNum, colNum] == 'L') {
-                        timeDistMatrix[rowNum, colNum] = 0;
+                        timeMatrix[rowNum, colNum] = 0;
                     }
                 }
             }
         }
         
-        return timeDistMatrix;
+        return timeMatrix;
     }
 }
 
@@ -492,7 +492,7 @@ public class Dijkstra
     }
 
     /**
-    This function uses the time distance matrix, dijkstra distances, start and target nodes to
+    This function uses the time matrix, dijkstra distances, start and target nodes to
     back track and find the optimal path.
     */
     public int[] FindDijkstrasPath(double[,] matrix, double[] dijkstraDistances, int startNode, int targetNode) {
@@ -587,18 +587,18 @@ public class Dijkstra
     This function takes the dijkstraPath, distance matrix and info matrix to sum the edges 
     from a distance matrix in order to generate a value for the total distance travelled.
     */
-    public double CalculateDistance(int[] dijkstraPath, double[,] distDistMatrix, char[,] infoMatrix) {
+    public double CalculateDistance(int[] dijkstraPath, double[,] distanceMatrix, char[,] infoMatrix) {
         
-        int numRows = distDistMatrix.GetLength(0);
-        int numColumns = distDistMatrix.GetLength(1);
+        int numRows = distanceMatrix.GetLength(0);
+        int numColumns = distanceMatrix.GetLength(1);
         // validate the matrix input by ensuring that it is n x n
         // achieved by finding number of rows and columns
         if (numRows != numColumns) {
-            throw new FormatException($"The input '{distDistMatrix}' does not have an equal number of rows as columns.");
+            throw new FormatException($"The input '{distanceMatrix}' does not have an equal number of rows as columns.");
         }
         // validate the second matrix input by ensuring that it is also n x n
         else if (infoMatrix.GetLength(0) != numRows || infoMatrix.GetLength(1) != numColumns) {
-            throw new FormatException($"The inputs '{distDistMatrix}' and '{infoMatrix}' do not have equal dimensions.");
+            throw new FormatException($"The inputs '{distanceMatrix}' and '{infoMatrix}' do not have equal dimensions.");
         }
 
         // provided that it is n x n
@@ -614,7 +614,7 @@ public class Dijkstra
         for (int i = 0; i < numPathNodes-1; i++) {
             fromNode = toNode; // previous to node is now from node
             toNode = dijkstraPath[i+1]; // to node is the next in array
-            edgeDistance = distDistMatrix[fromNode, toNode];
+            edgeDistance = distanceMatrix[fromNode, toNode];
             if (edgeDistance == 0) {
                 throw new ApplicationException($"Program has found Edge '{fromNode}', '{toNode}' with a distance of 0");
             }
@@ -1355,7 +1355,7 @@ internal class Program
         {
             Console.WriteLine("Unsuccessful Test");
         }*/
-        DistanceMatrix distmat = new DistanceMatrix();
+        /* DistanceMatrix distmat = new DistanceMatrix();
         double[,] matrixResult = distmat.ConfigureTimeDistMatrix(matrixD, matrixE);
         for (int row = 0; row < matrixResult.GetLength(0); row++)
         {
@@ -1392,7 +1392,7 @@ internal class Program
         else
         {
             Console.WriteLine("Unsuccessful Test");
-        }
+        } */
 
         /* DistanceMatrix distmat = new DistanceMatrix();
         double[,] matrixResult = distmat.AdjustStairsLifts(matrixD, matrixE);
