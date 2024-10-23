@@ -5,8 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
-using MySql.Data.MySqlClient.Authentication;
-using Org.BouncyCastle.Crypto.Signers; // include MySQL package
+using MySql.Data.MySqlClient.Authentication;// include MySQL package
 using System.Diagnostics;
 
 
@@ -391,8 +390,7 @@ public class DijkstraPathfinder
 
     // constructors
 
-    // if no value inputted, 
-    
+    // if database    
     public DijkstraPathfinder(MatrixBuilder mb){
 
         // need to get from db
@@ -418,6 +416,7 @@ public class DijkstraPathfinder
         estimatedDistance = 0;
     }
 
+    // if testing
     public DijkstraPathfinder(double[,] matrix) {
 
         // need to get from db
@@ -445,7 +444,6 @@ public class DijkstraPathfinder
         estimatedDistance = 0;
     }
 
-
     // methods
 
     /**
@@ -454,7 +452,7 @@ public class DijkstraPathfinder
     A distance of 0 in the matrix either means that the nodes are not directly connected or that the edge would be from 
     one node to the same, and an edge of this type does not exist in the database.
      */
-    public double[] DijkstrasAlgorithm(int[] nodesForMatrix, double[,] matrix, int startNode) {
+    public double[] DijkstrasAlgorithm(double[,] matrix, int startNode) {
 
         // to keep track of visited locations to not go to a previously visited node and to stay efficient
         bool[] visitedNodes = new bool[numberOfNodes];
@@ -525,7 +523,7 @@ public class DijkstraPathfinder
     and returns the value at the index specified. Most of the hard work has already
     been done for the estimation of time.
     */
-    public double EstimateTime(int[] nodesForMatrix, double[] dijkstraDistances, int targetNode) {
+    public double EstimateTime(double[] dijkstraDistances, int targetNode) {
         
         // convert from node id target node to index in array
         int targetNodeIndex = Array.IndexOf(nodesForMatrix, targetNode);
@@ -586,7 +584,7 @@ public class DijkstraPathfinder
     This function uses the time matrix, dijkstra distances, start and target nodes to
     back track and find the optimal path.
     */
-    public List<int> FindDijkstrasPath(int[] nodesForMatrix, double[,] matrix, double[] dijkstraDistances, int startNode, int targetNode) {
+    public List<int> FindDijkstrasPath(double[,] matrix, double[] dijkstraDistances, int startNode, int targetNode) {
         
         // convert from node id to index in array
         int startNodeIndex = Array.IndexOf(nodesForMatrix, startNode);
@@ -673,7 +671,7 @@ public class DijkstraPathfinder
     This function takes the dijkstraPath, distance matrix and info matrix to sum the edges 
     from a distance matrix in order to generate a value for the total distance travelled.
     */
-    public double CalculateDistance(int[] nodesForMatrix, List<int> dijkstraPath, double[,] distanceMatrix, char[,] infoMatrix) {
+    public double CalculateDistance(List<int> dijkstraPath, double[,] distanceMatrix, char[,] infoMatrix) {
 
         // provided that it is n x n
         int numPathNodes = dijkstraPath.Count;
@@ -719,11 +717,13 @@ public class DijkstraPathfinder
     */
     public void CarryOutAndInterpretDijkstras() {
 
-        dijkstraDistances = DijkstrasAlgorithm(nodesForMatrix, timeMatrix, targetNode);
-        estimatedTime = ConvertSecsToTimeFormat(EstimateTime(nodesForMatrix, dijkstraDistances, targetNode));
+        dijkstraDistances = DijkstrasAlgorithm(timeMatrix, targetNode);
+        estimatedTimeInSecs = EstimateTime(dijkstraDistances, targetNode);
+        estimatedTime = ConvertSecsToTimeFormat(estimatedTimeInSecs);
         estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime);
-        dijkstraPath = FindDijkstrasPath(nodesForMatrix, timeMatrix, dijkstraDistances, startNode, targetNode);
-        estimatedDistance = CalculateDistance(nodesForMatrix, dijkstraPath, distanceMatrix, infoMatrix);
+        dijkstraPath = FindDijkstrasPath(timeMatrix, dijkstraDistances, startNode, targetNode);
+        estimatedDistance = CalculateDistance(dijkstraPath, distanceMatrix, infoMatrix);
+        // could now show results to screen
     }
 
 }
