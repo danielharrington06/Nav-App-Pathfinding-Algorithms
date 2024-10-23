@@ -23,20 +23,20 @@ public class MatrixBuilder
 
     private bool stepFree;
 
-    private int[] nodesForMatrix;
+    public int[] nodesForMatrix {get; private set;}
 
     private double[,] distanceMatrixNormal;
     private char[,] infoMatrixNormal;
 
-    private double[,] distanceMatrixOWS;
-    private char[,] infoMatrixOWS;
+    public double[,] distanceMatrixOWS {get; private set;}
+    public char[,] infoMatrixOWS {get; private set;}
 
     private double[,] timeMatrixNormal;
-    public double[,] timeMatrixOWS;
+    public double[,] timeMatrixOWS {get; private set;}
 
-    private double[,] timeMatrixOWSStairsLifts;
+    public double[,] timeMatrixOWSStairsLifts {get; private set;}
 
-    int numberOfNodes;
+    public int numberOfNodes {get; private set;}
 
     // constructors
     public MatrixBuilder() {
@@ -345,7 +345,7 @@ public class MatrixBuilder
     This procedure links together all of the necessary functions for when the matrices
     are built for typical use by a regular user.
     */
-    public (int[], double[,], double[,], char[,]) BuildMatricesForPathfinding() {
+    public void BuildMatricesForPathfinding() {
 
         var(nfm, dmn, imn) = BuildNormalMatrices();
         nodesForMatrix = nfm;
@@ -357,8 +357,6 @@ public class MatrixBuilder
         timeMatrixNormal = ConfigureTimeMatrix(distanceMatrixNormal, infoMatrixNormal);
         timeMatrixOWS = ConfigureTimeMatrix(distanceMatrixOWS, infoMatrixOWS);
         timeMatrixOWSStairsLifts = AdjustStairsLifts(timeMatrixOWS, infoMatrixOWS);
-
-        return (nodesForMatrix, timeMatrixOWSStairsLifts, distanceMatrixOWS, infoMatrixOWS);
     }
 }
 
@@ -375,6 +373,7 @@ public class DijkstraPathfinder
     private double[,] timeMatrix;
     private double[,] distanceMatrix;
     private char[,] infoMatrix;
+
     private int startNode; // node id from nodesForMatrix
     private int targetNode; // node id from nodesForMatrix
 
@@ -391,23 +390,51 @@ public class DijkstraPathfinder
 
 
     // constructors
-    
-    public DijkstraPathfinder(int[] nodes, double[,] timematrix, double[,] distmatrix, char[,] infomatrix){
 
-        DatabaseHelper db = new DatabaseHelper();
+    // if no value inputted, 
+    
+    public DijkstraPathfinder(MatrixBuilder mb){
 
         // need to get from db
         timeSecsModifier = 0;
 
         // set non-null values for array and matrices
-        numberOfNodes = db.GetNumberOfNodes();
+        numberOfNodes = mb.numberOfNodes;
 
-        nodesForMatrix = nodes;
-        timeMatrix = timematrix;
-        distanceMatrix = distmatrix;
-        infoMatrix = infomatrix;
+        nodesForMatrix = mb.nodesForMatrix;
+        timeMatrix = mb.timeMatrixOWSStairsLifts;
+        distanceMatrix = mb.distanceMatrixOWS;
+        infoMatrix = mb.infoMatrixOWS;
+
         startNode = 0; // get from user interface stuff
         targetNode = 76; // get from user interface stuff
+
+        dijkstraDistances = new double[numberOfNodes];
+        estimatedTime = new TimeSpan(0, 0, 0);
+        estimatedTimeOfArrival = new TimeSpan(0, 0, 0);
+
+        dijkstraPath = [];
+
+        estimatedDistance = 0;
+    }
+
+    public DijkstraPathfinder(double[,] matrix) {
+
+        // need to get from db
+        timeSecsModifier = 0;
+
+        numberOfNodes = matrix.GetLength(0);
+        
+        nodesForMatrix = new int[numberOfNodes];
+        for (int i = 0; i < numberOfNodes; i++) {
+            nodesForMatrix[i] = i;
+        }
+        timeMatrix = matrix;
+        distanceMatrix = new double[numberOfNodes,numberOfNodes];
+        infoMatrix = new char[numberOfNodes,numberOfNodes];
+
+        startNode = 0; // get from user interface stuff
+        targetNode = 0; // get from user interface stuff
 
         dijkstraDistances = new double[numberOfNodes];
         estimatedTime = new TimeSpan(0, 0, 0);
@@ -691,6 +718,7 @@ public class DijkstraPathfinder
     Algorithm for a typical user, including returning the time, eta, distance.
     */
     public void CarryOutAndInterpretDijkstras() {
+
         dijkstraDistances = DijkstrasAlgorithm(nodesForMatrix, timeMatrix, targetNode);
         estimatedTime = ConvertSecsToTimeFormat(EstimateTime(nodesForMatrix, dijkstraDistances, targetNode));
         estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime);
@@ -1076,23 +1104,28 @@ public class DatabaseHelper
         return congestionTimes;
     }
 
-/**
-This function uses SQL to get the margin time (amount of time after a specified congestion time for
-which the corridor is still busy.
-*/
-public TimeSpan GetCongestionDuration() {
-    // get margin time from sql query
-    var (timeFields, timeValues) = ExecuteSelect("SELECT setting_value FROM tblsetting WHERE setting_name = \"congestionDuration\"");
-    string congestionDuration = "" + Convert.ToString(timeValues[0][0]);
-    // now need to get out of weird format and convert into a timespan that gets appended to list of time spans
-    // format is 00,00,00
-    int hours = Convert.ToInt32(congestionDuration.Substring(0, 2)); // start at character 0 and take two characters
-    int minutes = Convert.ToInt32(congestionDuration.Substring(3, 2)); // start at character 3 and take two characters
-    int seconds = Convert.ToInt32(congestionDuration.Substring(6, 2)); // start at character 6 and take two characters
-    // place nicely here
-    TimeSpan congestionDurationTS = new TimeSpan(hours, minutes, seconds);
-    return congestionDurationTS;
-}
+    /**
+    This function uses SQL to get the margin time (amount of time after a specified congestion time for
+    which the corridor is still busy.
+    */
+    public TimeSpan GetCongestionDuration() {
+
+        // get margin time from sql query
+        var (timeFields, timeValues) = ExecuteSelect("SELECT setting_value FROM tblsetting WHERE setting_name = \"congestionDuration\"");
+
+        string congestionDuration = "" + Convert.ToString(timeValues[0][0]);
+
+        // now need to get out of weird format and convert into a timespan that gets appended to list of time spans
+        // format is 00,00,00
+        int hours = Convert.ToInt32(congestionDuration.Substring(0, 2)); // start at character 0 and take two characters
+        int minutes = Convert.ToInt32(congestionDuration.Substring(3, 2)); // start at character 3 and take two characters
+        int seconds = Convert.ToInt32(congestionDuration.Substring(6, 2)); // start at character 6 and take two characters
+
+        // place nicely here
+        TimeSpan congestionDurationTS = new TimeSpan(hours, minutes, seconds);
+
+        return congestionDurationTS;
+    }
 }
 
 internal class Program
@@ -1100,8 +1133,8 @@ internal class Program
     private static void Main(string[] args)
     {
         MatrixBuilder mb = new MatrixBuilder();
-        var (nodes, timeMatrix, distMatrix, infoMatrix) = mb.BuildMatricesForPathfinding();
-        DijkstraPathfinder dp = new DijkstraPathfinder(nodes, timeMatrix, distMatrix, infoMatrix);
+        mb.BuildMatricesForPathfinding();
+        DijkstraPathfinder dp = new DijkstraPathfinder(mb);
         FloydPathfinder fp = new FloydPathfinder();
         DatabaseHelper db = new DatabaseHelper();
 
@@ -1382,12 +1415,12 @@ internal class Program
             Console.WriteLine("Unsuccesful Test");
         } */
 
-        /* double[,] matrixResult = new double[16, 16]; //result matrix
+        double[,] matrixResult = new double[16, 16]; //result matrix
         double[] tempList = new double[16]; //a list to grab results of each run of dijkstras
 
         for (int node = 0; node < matrixD.GetLength(0); node++)
         {   //run dijkstras from each node
-            Dijkstra dijkstra = new Dijkstra();
+            DijkstraPathfinder dijkstra = new DijkstraPathfinder(matrixD);
             tempList = dijkstra.DijkstrasAlgorithm(matrixD, node);
             for (int i = 0; i < tempList.Length; i++)
             { //write data to temp list
@@ -1424,7 +1457,7 @@ internal class Program
         else
         {
             Console.WriteLine("Unsuccessful Test");
-        }*/
+        }
         /* DistanceMatrix distmat = new DistanceMatrix();
         double[,] matrixResult = distmat.ConfigureTimeMatrix(matrixD, matrixE);
         for (int row = 0; row < matrixResult.GetLength(0); row++)
@@ -1711,7 +1744,7 @@ internal class Program
             Console.WriteLine();
         }
         Console.WriteLine();*/ 
-        Stopwatch sw = new Stopwatch();
+        /* Stopwatch sw = new Stopwatch();
         sw.Start();
         double[] dd = dp.DijkstrasAlgorithm(nodes, timeMatrix, 0);
         sw.Stop();
@@ -1720,7 +1753,9 @@ internal class Program
         for (int i = 0; i < dd.Length; i++) {
             Console.Write(Convert.ToString(dd[i]) + ", ");
         }
-        Console.WriteLine("Elapsed={0}",sw.Elapsed);
+        Console.WriteLine("Elapsed={0}",sw.Elapsed); */
+
+        
 
     }   
 }
