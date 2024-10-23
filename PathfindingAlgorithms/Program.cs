@@ -374,7 +374,7 @@ public class MatrixBuilder
     This procedure links together all of the neccessary functions for when the matrices
     are built for typical use by a regular user.
     */
-    public void BuildAllMatricesFromDatabase() {
+    public void BuildMatricesForPathfinding() {
 
         var(nfm, dmn, imn) = BuildNormalMatrices();
         nodesForMatrix = nfm;
