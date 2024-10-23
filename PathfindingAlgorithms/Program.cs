@@ -7,6 +7,7 @@ using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
 using MySql.Data.MySqlClient.Authentication;
 using Org.BouncyCastle.Crypto.Signers; // include MySQL package
+using System.Diagnostics;
 
 
 public class MatrixBuilder
@@ -31,7 +32,7 @@ public class MatrixBuilder
     private char[,] infoMatrixOWS;
 
     private double[,] timeMatrixNormal;
-    private double[,] timeMatrixOWS;
+    public double[,] timeMatrixOWS;
 
     private double[,] timeMatrixOWSStairsLifts;
 
@@ -225,21 +226,6 @@ public class MatrixBuilder
     */
     public double[,] ConfigureTimeMatrix(double[,] distanceMatrix, char[,] infoMatrix) {
 
-        int numRows = distanceMatrix.GetLength(0);
-        int numColumns = distanceMatrix.GetLength(1);
-        // validate the matrix input by ensuring that it is n x n
-        // achieved by finding number of rows and columns
-        if (numRows != numColumns) {
-            throw new FormatException($"The input '{distanceMatrix}' does not have an equal number of rows as columns.");
-        }
-        // validate the second matrix input by ensuring that it is also n x n
-        else if (infoMatrix.GetLength(0) != numRows || infoMatrix.GetLength(1) != numColumns) {
-            throw new FormatException($"The inputs '{distanceMatrix}' and '{infoMatrix}' do not have equal dimensions.");
-        }
-
-        // provided that it is n x n
-        int numberOfNodes = numRows;
-
         // figure out if slow (congested) values for velocity should be used
         // calculated once so not repeating each loop
         bool useSlowVal = NearCongestionTime() && useTimeOfDayForCalculation;
@@ -250,7 +236,7 @@ public class MatrixBuilder
         char info;
 
         // initialise returned matrix
-        double[,] timeMatrix = new double[numRows, numColumns];
+        double[,] timeMatrix = new double[numberOfNodes, numberOfNodes];
 
         for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
             for (int colNum = 0; colNum < numberOfNodes; colNum++) {
@@ -331,21 +317,6 @@ public class MatrixBuilder
     */
     public double[,] AdjustStairsLifts(double[,] timeMatrix, char[,] infoMatrix) {
 
-        int numRows = timeMatrix.GetLength(0);
-        int numColumns = timeMatrix.GetLength(1);
-        // validate the matrix input by ensuring that it is n x n
-        // achieved by finding number of rows and columns
-        if (numRows != numColumns) {
-            throw new FormatException($"The input '{timeMatrix}' does not have an equal number of rows as columns.");
-        }
-        // validate the second matrix input by ensuring that it is also n x n
-        else if (timeMatrix.GetLength(0) != numColumns || infoMatrix.GetLength(1) != numRows) {
-            throw new FormatException($"The inputs '{timeMatrix}' and '{infoMatrix}' do not have equal dimensions.");
-        }
-
-        // provided that it is n x n
-        int numberOfNodes = numRows;
-
         //saves computation time only checking this once instead of for each iteration
         if (stepFree) { // so get rid of edges for stairs
             for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
@@ -371,10 +342,10 @@ public class MatrixBuilder
     }
 
     /**
-    This procedure links together all of the neccessary functions for when the matrices
+    This procedure links together all of the necessary functions for when the matrices
     are built for typical use by a regular user.
     */
-    public void BuildMatricesForPathfinding() {
+    public (int[], double[,], double[,], char[,]) BuildMatricesForPathfinding() {
 
         var(nfm, dmn, imn) = BuildNormalMatrices();
         nodesForMatrix = nfm;
@@ -386,6 +357,8 @@ public class MatrixBuilder
         timeMatrixNormal = ConfigureTimeMatrix(distanceMatrixNormal, infoMatrixNormal);
         timeMatrixOWS = ConfigureTimeMatrix(distanceMatrixOWS, infoMatrixOWS);
         timeMatrixOWSStairsLifts = AdjustStairsLifts(timeMatrixOWS, infoMatrixOWS);
+
+        return (nodesForMatrix, timeMatrixOWSStairsLifts, distanceMatrixOWS, infoMatrixOWS);
     }
 }
 
@@ -395,11 +368,54 @@ public class DijkstraPathfinder
 
     // fields
     private double timeSecsModifier; // used to consider time getting in and out of classrooms for example
+    
+    int numberOfNodes;
+
+    private int[] nodesForMatrix;
+    private double[,] timeMatrix;
+    private double[,] distanceMatrix;
+    private char[,] infoMatrix;
+    private int startNode; // node id from nodesForMatrix
+    private int targetNode; // node id from nodesForMatrix
+
+    private double[] dijkstraDistances;
+
+    private double estimatedTimeInSecs;
+    private TimeSpan estimatedTime;
+    private TimeSpan estimatedTimeOfArrival;
+
+    List<int> dijkstraPath; // path of node id's
+
+    public double estimatedDistance;
+
 
 
     // constructors
-    public DijkstraPathfinder(){
+    
+    public DijkstraPathfinder(int[] nodes, double[,] timematrix, double[,] distmatrix, char[,] infomatrix){
+
+        DatabaseHelper db = new DatabaseHelper();
+
+        // need to get from db
         timeSecsModifier = 0;
+
+        // set non-null values for array and matrices
+        numberOfNodes = db.GetNumberOfNodes();
+
+        nodesForMatrix = nodes;
+        timeMatrix = timematrix;
+        distanceMatrix = distmatrix;
+        infoMatrix = infomatrix;
+        startNode = 0; // get from user interface stuff
+        targetNode = 76; // get from user interface stuff
+
+        dijkstraDistances = new double[numberOfNodes];
+        estimatedTime = new TimeSpan(0, 0, 0);
+        estimatedTimeOfArrival = new TimeSpan(0, 0, 0);
+
+        dijkstraPath = [];
+
+        estimatedDistance = 0;
     }
 
 
@@ -411,19 +427,7 @@ public class DijkstraPathfinder
     A distance of 0 in the matrix either means that the nodes are not directly connected or that the edge would be from 
     one node to the same, and an edge of this type does not exist in the database.
      */
-    public double[] DijkstrasAlgorithm(double[,] matrix, int startNodeIndex) {
-
-        int numRows = matrix.GetLength(0);
-        int numColumns = matrix.GetLength(1);
-
-        // validate the matrix input by ensuring that it is n x n
-        // achieved by finding number of rows and columns
-        if (numRows != numColumns) {
-            throw new FormatException($"The input '{matrix}' does not have an equal number of rows as columns.");
-        }
-
-        // provided that it is n x n
-        int numberOfNodes = numRows;
+    public double[] DijkstrasAlgorithm(int[] nodesForMatrix, double[,] matrix, int startNode) {
 
         // to keep track of visited locations to not go to a previously visited node and to stay efficient
         bool[] visitedNodes = new bool[numberOfNodes];
@@ -433,10 +437,10 @@ public class DijkstraPathfinder
         // initial setup
         for (int i = 0; i < numberOfNodes; i++) {
             visitedNodes[i] = false;
-            dijkstraDistances[i] = matrix[startNodeIndex, i];
+            dijkstraDistances[i] = matrix[startNode, i];
         }
         
-        int currentNode = startNodeIndex;
+        int currentNodeIndex = Array.IndexOf(nodesForMatrix, startNode);
 
         // setup variables before while loop
         double distanceToNode;
@@ -446,18 +450,18 @@ public class DijkstraPathfinder
 
         // repeats as long as there is at least one unvisited node
         while (visitedNodes.Contains(false)) {
-            visitedNodes[currentNode] = true;
-            distanceToNode = dijkstraDistances[currentNode];
+            visitedNodes[currentNodeIndex] = true;
+            distanceToNode = dijkstraDistances[currentNodeIndex];
 
             // iterate over other nodes
-            for (int j = 0; j < numColumns; j++) {
+            for (int j = 0; j < numberOfNodes; j++) {
                 // if already visited node, skip
-                if (visitedNodes[j] || currentNode == j) {}
+                if (visitedNodes[j] || currentNodeIndex == j) {}
 
                 //if unvisited, consider
                 else {
                     //distance from currentNode to the other node
-                    outgoingDist = matrix[currentNode, j];
+                    outgoingDist = matrix[currentNodeIndex, j];
                     // this distance may be 0, so no direct connection or it is itself
                     if (outgoingDist == 0) {}
 
@@ -475,7 +479,7 @@ public class DijkstraPathfinder
             // now select next node
             lowestVal = double.MaxValue;
             lowestValIndex = -1;
-            for (int k = 0; k < numColumns; k++) {
+            for (int k = 0; k < numberOfNodes; k++) {
                 if (visitedNodes[k] == false) {
                     if (dijkstraDistances[k] < lowestVal && dijkstraDistances[k] != 0) {
                         lowestVal = dijkstraDistances[k];
@@ -483,7 +487,7 @@ public class DijkstraPathfinder
                     }
                 }
             }
-            currentNode = lowestValIndex;
+            currentNodeIndex = lowestValIndex;
         }
 
         return dijkstraDistances;
@@ -494,13 +498,19 @@ public class DijkstraPathfinder
     and returns the value at the index specified. Most of the hard work has already
     been done for the estimation of time.
     */
-    public double EstimateTime(double[] dijkstraDistances, int targetNode) {
+    public double EstimateTime(int[] nodesForMatrix, double[] dijkstraDistances, int targetNode) {
+        
+        // convert from node id target node to index in array
+        int targetNodeIndex = Array.IndexOf(nodesForMatrix, targetNode);
 
-        if (targetNode >= dijkstraDistances.Length) {
-            throw new FormatException($"List index '{targetNode}' out of range.");
+        // deal with it being out of range
+        if (targetNodeIndex >= dijkstraDistances.Length) {
+            throw new FormatException($"List index '{targetNodeIndex}' out of range.");
         }
-        double timeInSecs = dijkstraDistances[targetNode];
-        timeInSecs += timeSecsModifier; // at 0 for testing, will be adjusted later
+
+        double timeInSecs = dijkstraDistances[targetNodeIndex];
+        timeInSecs += timeSecsModifier; // at 0 for testing, get from database later
+        
         return timeInSecs;
     }
 
@@ -549,44 +559,35 @@ public class DijkstraPathfinder
     This function uses the time matrix, dijkstra distances, start and target nodes to
     back track and find the optimal path.
     */
-    public int[] FindDijkstrasPath(double[,] matrix, double[] dijkstraDistances, int startNode, int targetNode) {
+    public List<int> FindDijkstrasPath(int[] nodesForMatrix, double[,] matrix, double[] dijkstraDistances, int startNode, int targetNode) {
         
-        // first check that parameters are valid
-        //starting with startNode matching with dijkstraDistances
-
-        if (dijkstraDistances[startNode] != 0) {
-            throw new ArgumentException($"The input '{dijkstraDistances}' is not 0 at the startNode's index.");
-        }
-        else if (matrix.GetLength(0) != matrix.GetLength(1)) {
-            throw new FormatException($"The input matrix is not equal in rows and columns.");
-        }
-        else if (matrix.GetLength(0) != dijkstraDistances.Length) {
-            throw new ArgumentException($"The matrix and dijkstraDistances are not compatible.");
-        }
-        
-        int numberOfNodes = matrix.GetLength(0);
-        
+        // convert from node id to index in array
+        int startNodeIndex = Array.IndexOf(nodesForMatrix, startNode);
+        int targetNodeIndex = Array.IndexOf(nodesForMatrix, targetNode);
 
         // use a list to store path as it will change in size
-        List<int> dijkstraPath = [targetNode];
+        List<int> dijkstraPath = [targetNodeIndex];
+
+        int currentNodeIndex = targetNodeIndex;
         int currentNode = targetNode;
+
         List<double> attachedEdges = new List<double>();
         List<int> possibleNodes = new List<int>();
 
-        while (currentNode != startNode) {
-            // get row currentNode from matrix
+        while (currentNodeIndex != startNodeIndex) {
+            // get row currentNodeIndex from matrix
             attachedEdges.Clear();
             for (int i = 0; i < numberOfNodes; i++) {
                 // seems wrong to have [i, currentNode]
                 // however we are backtracking so its all edges going into current node
-                attachedEdges.Add(matrix[i, currentNode]);
+                attachedEdges.Add(matrix[i, currentNodeIndex]);
             }
 
             // indexes in list are part of optimal path
             possibleNodes.Clear();
             for (int i = 0; i < numberOfNodes; i++) {
                 // add optimal edges to list
-                if (Math.Round(dijkstraDistances[currentNode] - attachedEdges[i], 1) == dijkstraDistances[i]) {
+                if (Math.Round(dijkstraDistances[currentNodeIndex] - attachedEdges[i], 1) == dijkstraDistances[i]) {
                     if (!dijkstraPath.Contains(i)){
                         possibleNodes.Add(i);
                     }
@@ -600,7 +601,9 @@ public class DijkstraPathfinder
 
             if (possibleNodes.Count == 1) {
                 // consider this node as the current node
-                currentNode = possibleNodes[0];
+                currentNodeIndex = possibleNodes[0];
+                // get node id of current node
+                currentNode = nodesForMatrix[currentNodeIndex];
                 // add it to the backtracked path
                 dijkstraPath.Add(currentNode);
             }
@@ -609,7 +612,9 @@ public class DijkstraPathfinder
                 Random random = new Random();
                 int randomIndex = random.Next(0, possibleNodes.Count); // currently just 0, make random function
                 // consider this node as the current node
-                currentNode = possibleNodes[randomIndex];
+                currentNodeIndex = possibleNodes[randomIndex];
+                // get node id of current node
+                currentNode = nodesForMatrix[currentNodeIndex];
                 // add it to the backtracked path
                 dijkstraPath.Add(currentNode);
             }
@@ -627,11 +632,11 @@ public class DijkstraPathfinder
         // now convert the list into an array and reverse it
         // save time by storing length of list
         int dijkstrPathLength = dijkstraPath.Count;
-        int[] dijkstraPathReturn = new int[dijkstrPathLength];
+        List<int> dijkstraPathReturn = [];
         for (int i = 0; i < dijkstrPathLength; i++) {
             // take last value and place it first in list
             // - 1 - i works
-            dijkstraPathReturn[i] = dijkstraPath[dijkstrPathLength-1-i];
+            dijkstraPathReturn.Add(dijkstraPath[dijkstrPathLength-1-i]);
         }
 
         return dijkstraPathReturn;
@@ -641,38 +646,35 @@ public class DijkstraPathfinder
     This function takes the dijkstraPath, distance matrix and info matrix to sum the edges 
     from a distance matrix in order to generate a value for the total distance travelled.
     */
-    public double CalculateDistance(int[] dijkstraPath, double[,] distanceMatrix, char[,] infoMatrix) {
-        
-        int numRows = distanceMatrix.GetLength(0);
-        int numColumns = distanceMatrix.GetLength(1);
-        // validate the matrix input by ensuring that it is n x n
-        // achieved by finding number of rows and columns
-        if (numRows != numColumns) {
-            throw new FormatException($"The input '{distanceMatrix}' does not have an equal number of rows as columns.");
-        }
-        // validate the second matrix input by ensuring that it is also n x n
-        else if (infoMatrix.GetLength(0) != numRows || infoMatrix.GetLength(1) != numColumns) {
-            throw new FormatException($"The inputs '{distanceMatrix}' and '{infoMatrix}' do not have equal dimensions.");
-        }
+    public double CalculateDistance(int[] nodesForMatrix, List<int> dijkstraPath, double[,] distanceMatrix, char[,] infoMatrix) {
 
         // provided that it is n x n
-        int numPathNodes = dijkstraPath.Length;
+        int numPathNodes = dijkstraPath.Count;
 
         //double to hold totalDistance
         double totalDistance = 0;
 
-        int fromNode; // represents the node coming from for each edge
+        int fromNode = dijkstraPath[0]; // represents the node coming from for each edge
         int toNode = dijkstraPath[0]; // represents node going to
-        double edgeDistance; // stored so can check if lift
+
+        //now convert into node indexes
+        int fromNodeIndex = Array.IndexOf(nodesForMatrix, fromNode);
+        int toNodeIndex = Array.IndexOf(nodesForMatrix,toNode);
+        double edgeDistance;
 
         for (int i = 0; i < numPathNodes-1; i++) {
-            fromNode = toNode; // previous to node is now from node
-            toNode = dijkstraPath[i+1]; // to node is the next in array
-            edgeDistance = distanceMatrix[fromNode, toNode];
+            fromNodeIndex = toNodeIndex; // previous to node is now from node
+            fromNode = toNode;
+
+            toNode= dijkstraPath[i+1]; // to node is the next in array
+            // find toNode index
+            toNodeIndex = Array.IndexOf(nodesForMatrix, toNode);
+
+            edgeDistance = distanceMatrix[fromNodeIndex, toNodeIndex];
             if (edgeDistance == 0) {
                 throw new ApplicationException($"Program has found Edge '{fromNode}', '{toNode}' with a distance of 0");
             }
-            else if (infoMatrix[fromNode, toNode] == 'L') {
+            else if (infoMatrix[fromNodeIndex, toNodeIndex] == 'L') {
                 //do nothing as this shouldnt be updated
             }
             else {
@@ -681,8 +683,21 @@ public class DijkstraPathfinder
             }
         }
         
-        return Math.Round(totalDistance,1);
+        return Math.Round(totalDistance, 1);
     }
+
+    /**
+    This procedure links together all of the necessary functions for carrying out Dijkstra's
+    Algorithm for a typical user, including returning the time, eta, distance.
+    */
+    public void CarryOutAndInterpretDijkstras() {
+        dijkstraDistances = DijkstrasAlgorithm(nodesForMatrix, timeMatrix, targetNode);
+        estimatedTime = ConvertSecsToTimeFormat(EstimateTime(nodesForMatrix, dijkstraDistances, targetNode));
+        estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime);
+        dijkstraPath = FindDijkstrasPath(nodesForMatrix, timeMatrix, dijkstraDistances, startNode, targetNode);
+        estimatedDistance = CalculateDistance(nodesForMatrix, dijkstraPath, distanceMatrix, infoMatrix);
+    }
+
 }
 
 public class FloydPathfinder 
@@ -1085,7 +1100,8 @@ internal class Program
     private static void Main(string[] args)
     {
         MatrixBuilder mb = new MatrixBuilder();
-        DijkstraPathfinder dp = new DijkstraPathfinder();
+        var (nodes, timeMatrix, distMatrix, infoMatrix) = mb.BuildMatricesForPathfinding();
+        DijkstraPathfinder dp = new DijkstraPathfinder(nodes, timeMatrix, distMatrix, infoMatrix);
         FloydPathfinder fp = new FloydPathfinder();
         DatabaseHelper db = new DatabaseHelper();
 
@@ -1695,5 +1711,16 @@ internal class Program
             Console.WriteLine();
         }
         Console.WriteLine();*/ 
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        double[] dd = dp.DijkstrasAlgorithm(nodes, timeMatrix, 0);
+        sw.Stop();
+
+
+        for (int i = 0; i < dd.Length; i++) {
+            Console.Write(Convert.ToString(dd[i]) + ", ");
+        }
+        Console.WriteLine("Elapsed={0}",sw.Elapsed);
+
     }   
 }
