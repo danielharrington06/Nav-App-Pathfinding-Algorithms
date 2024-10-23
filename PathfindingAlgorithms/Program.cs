@@ -1132,11 +1132,19 @@ internal class Program
 {
     private static void Main(string[] args)
     {
+        // start:
         MatrixBuilder mb = new MatrixBuilder();
-        mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
         FloydPathfinder fp = new FloydPathfinder();
         DatabaseHelper db = new DatabaseHelper();
+
+        /* // build all matrices
+        mb.BuildMatricesForPathfinding();
+
+        // on click/enter:
+        // receive data from UI about start node and target node
+        // now do Dijkstra's
+        dp.CarryOutAndInterpretDijkstras(); */
 
         /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
             bool areEqual = true;
@@ -1355,7 +1363,7 @@ internal class Program
         };
 
         // DD Test 18
-        int[] listM = new int[5] {1, 2, 3, 0, 4};
+        List<int> listM = [1, 2, 3, 0, 4];
 
         // DD Test 19
         int[] listL = new int[5] {0, 7, 1, 3, 13};
@@ -1415,7 +1423,7 @@ internal class Program
             Console.WriteLine("Unsuccesful Test");
         } */
 
-        double[,] matrixResult = new double[16, 16]; //result matrix
+        /* double[,] matrixResult = new double[16, 16]; //result matrix
         double[] tempList = new double[16]; //a list to grab results of each run of dijkstras
 
         for (int node = 0; node < matrixD.GetLength(0); node++)
@@ -1457,7 +1465,8 @@ internal class Program
         else
         {
             Console.WriteLine("Unsuccessful Test");
-        }
+        } */
+
         /* DistanceMatrix distmat = new DistanceMatrix();
         double[,] matrixResult = distmat.ConfigureTimeMatrix(matrixD, matrixE);
         for (int row = 0; row < matrixResult.GetLength(0); row++)
@@ -1528,11 +1537,11 @@ internal class Program
         string formatted2 = string.Format("{0:%h} hours, {0:%m} minutes, {0:%s} seconds",eta);
         Console.WriteLine(formatted2); */
 
-        /* Dijkstra dijk = new Dijkstra();
+        /* DijkstraPathfinder dijk = new DijkstraPathfinder(matrixD);
         int startNode = 0;
         int targetNode = 13;
-        int[] returnList = dijk.FindDijkstrasPath(matrixD, listD, startNode, targetNode);
-        for (int i = 0; i < returnList.Length; i++) {
+        List<int> returnList = dijk.FindDijkstrasPath(matrixD, listD, startNode, targetNode);
+        for (int i = 0; i < returnList.Count; i++) {
             Console.Write(returnList[i].ToString() + ",");
         }
         Console.WriteLine();
@@ -1544,7 +1553,7 @@ internal class Program
             Console.WriteLine("Unsuccessful Test");
         } */
 
-        /* Dijkstra dijk = new Dijkstra();
+        /* DijkstraPathfinder dijk = new DijkstraPathfinder(matrixK);
         double returnDistance = dijk.CalculateDistance(listM, matrixK, matrixP);
         Console.WriteLine(returnDistance);
         if (returnDistance == 53.4) {
@@ -1552,8 +1561,8 @@ internal class Program
         }
         else {
             Console.WriteLine("\nUnsuccessful Test");
-        } */
-
+        }
+ */
         /* Floyd floyd= new Floyd();
         (double[,] matrix1, int[,] matrix2) = floyd.FloydsAlgorithm(matrixD);
 
@@ -1744,16 +1753,18 @@ internal class Program
             Console.WriteLine();
         }
         Console.WriteLine();*/ 
-        /* Stopwatch sw = new Stopwatch();
+
+        Stopwatch sw = new Stopwatch();
         sw.Start();
-        double[] dd = dp.DijkstrasAlgorithm(nodes, timeMatrix, 0);
+        mb.BuildMatricesForPathfinding();
+        double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixOWSStairsLifts, 0);
         sw.Stop();
 
 
         for (int i = 0; i < dd.Length; i++) {
             Console.Write(Convert.ToString(dd[i]) + ", ");
         }
-        Console.WriteLine("Elapsed={0}",sw.Elapsed); */
+        Console.WriteLine("Elapsed={0}",sw.Elapsed);
 
         
 
