@@ -5,7 +5,8 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
-using MySql.Data.MySqlClient.Authentication; // include MySQL package
+using MySql.Data.MySqlClient.Authentication;
+using Org.BouncyCastle.Crypto.Signers; // include MySQL package
 
 
 public class MatrixBuilder
@@ -18,6 +19,23 @@ public class MatrixBuilder
     private bool useTimeOfDayForCalculationUser;    
     private bool useTimeOfDayForCalculationDB;
     private bool useTimeOfDayForCalculation;
+
+    private bool stepFree;
+
+    private int[] nodesForMatrix;
+
+    private double[,] distanceMatrixNormal;
+    private char[,] infoMatrixNormal;
+
+    private double[,] distanceMatrixOWS;
+    private char[,] infoMatrixOWS;
+
+    private double[,] timeMatrixNormal;
+    private double[,] timeMatrixOWS;
+
+    private double[,] timeMatrixOWSStairsLifts;
+
+    int numberOfNodes;
 
     // constructors
     public MatrixBuilder() {
@@ -47,10 +65,31 @@ public class MatrixBuilder
         // if DB sets it as false, then it is false, otherwise, follow user's settings
         // this is just 'and' gate
         useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
+
+        // get user settings for step free access
+        stepFree = false; // false means normal person
+
+        // set non null values for array/matrices
+        numberOfNodes = db.GetNumberOfNodes();
+        nodesForMatrix = new int[numberOfNodes];
+
+        distanceMatrixNormal = new double[numberOfNodes, numberOfNodes];
+        infoMatrixNormal = new char[numberOfNodes, numberOfNodes];
+
+        distanceMatrixOWS = new double[numberOfNodes, numberOfNodes];
+        infoMatrixOWS = new char[numberOfNodes, numberOfNodes];
+
+        timeMatrixNormal = new double[numberOfNodes, numberOfNodes];
+        timeMatrixOWS = new double[numberOfNodes, numberOfNodes];
+
+        timeMatrixOWSStairsLifts = new double[numberOfNodes, numberOfNodes];
     }
 
     // methods
-
+    
+    /**
+    This procedure shows all the edge velocities defined above, from the database
+    */
     public void ShowVelocities() {
         foreach (var x in edgeVelocities) {
             Console.WriteLine(x);
@@ -138,44 +177,44 @@ public class MatrixBuilder
         return (nodeArray, distanceMatrix, infoMatrix);
     }
 
-/**
-This function takes the results of the above function (node array, dist matrix, info amatrix)
-and sets all values to zero where the one way system applies.
-*/
-public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] distanceMatrix, char[,] infoMatrix) {
+    /**
+    This function takes the results of the above function (node array, dist matrix, info amatrix)
+    and sets all values to zero where the one way system applies.
+    */
+    public (double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] distanceMatrix, char[,] infoMatrix) {
 
-    // clone matrices as they got passed by ref not by val
-    var distanceMatrixOWS = (double[,])distanceMatrix.Clone();
-    var infoMatrixOWS = (char[,])infoMatrix.Clone();
-    
-    // get all one-way edges from db
-    DatabaseHelper db = new DatabaseHelper();
-    var (edgeFields, edgeValues) = db.GetOneWayEdges();
+        // clone matrices as they got passed by ref not by val
+        var distanceMatrixOneWay = (double[,])distanceMatrix.Clone();
+        var infoMatrixOneWay = (char[,])infoMatrix.Clone();
 
-    //get number of times need to loop from the edgeValues
-    int numberOfEdges = edgeValues.Count;
+        // get all one-way edges from db
+        DatabaseHelper db = new DatabaseHelper();
+        var (edgeFields, edgeValues) = db.GetOneWayEdges();
 
-    // just in case the order has been changed, get indexes manually
-    int node1FieldIndex = edgeFields.IndexOf("node_1_id");
-    int node2FieldIndex = edgeFields.IndexOf("node_2_id");
+        //get number of times need to loop from the edgeValues
+        int numberOfEdges = edgeValues.Count;
 
-    for (int i = 0; i < numberOfEdges; i++) {
+        // just in case the order has been changed, get indexes manually
+        int node1FieldIndex = edgeFields.IndexOf("node_1_id");
+        int node2FieldIndex = edgeFields.IndexOf("node_2_id");
 
-        // get node id from edge values
-        int node1ID = Convert.ToInt32(edgeValues[i][node1FieldIndex]); // returns a node id
-        int node2ID = Convert.ToInt32(edgeValues[i][node2FieldIndex]); // returns a node id
+        for (int i = 0; i < numberOfEdges; i++) {
 
-        // get node index from node array
-        int node1Index = Array.IndexOf(nodeArray, node1ID);
-        int node2Index = Array.IndexOf(nodeArray, node2ID);
+            // get node id from edge values
+            int node1ID = Convert.ToInt32(edgeValues[i][node1FieldIndex]); // returns a node id
+            int node2ID = Convert.ToInt32(edgeValues[i][node2FieldIndex]); // returns a node id
 
-        // set the edge from node 2 to node 1 to 0 in matrices
-        distanceMatrixOWS[node2Index, node1Index] = 0;
-        infoMatrixOWS[node2Index, node1Index] = '0';
-    } 
+            // get node index from node array
+            int node1Index = Array.IndexOf(nodeArray, node1ID);
+            int node2Index = Array.IndexOf(nodeArray, node2ID);
 
-    return (nodeArray, distanceMatrixOWS, infoMatrixOWS);
-}
+            // set the edge from node 2 to node 1 to 0 in matrices
+            distanceMatrixOneWay[node2Index, node1Index] = 0;
+            infoMatrixOneWay[node2Index, node1Index] = '0';
+        } 
+
+        return (distanceMatrixOneWay, infoMatrixOneWay);
+    }
 
     /**
     This functions configures a time matrix so that pathfinding can be carried out.
@@ -184,7 +223,7 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
     It then estimates time for each non 0 edge in the matrix, also considering the time of day if this is enabled
     in the user settings and database settings.
     */
-    public double[,] ConfigureTimeDistMatrix(double[,] distanceMatrix, char[,] infoMatrix) {
+    public double[,] ConfigureTimeMatrix(double[,] distanceMatrix, char[,] infoMatrix) {
 
         int numRows = distanceMatrix.GetLength(0);
         int numColumns = distanceMatrix.GetLength(1);
@@ -307,11 +346,8 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         // provided that it is n x n
         int numberOfNodes = numRows;
 
-        //get setting
-        bool stepFreeAccess = false; // later get this from user settings
-
         //saves computation time only checking this once instead of for each iteration
-        if (stepFreeAccess) { // so get rid of edges for stairs
+        if (stepFree) { // so get rid of edges for stairs
             for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
                 for (int colNum = 0; colNum < numberOfNodes; colNum++) {
                     if (infoMatrix[rowNum, colNum] == 'S') {
@@ -332,6 +368,24 @@ public (int[], double[,], char[,]) BuildOWSMatrices(int[] nodeArray, double[,] d
         }
         
         return timeMatrix;
+    }
+
+    /**
+    This procedure links together all of the neccessary functions for when the matrices
+    are built for typical use by a regular user.
+    */
+    public void BuildAllMatricesFromDatabase() {
+
+        var(nfm, dmn, imn) = BuildNormalMatrices();
+        nodesForMatrix = nfm;
+        distanceMatrixNormal = dmn;
+        infoMatrixNormal = imn;
+        var(dmows, imows) = BuildOWSMatrices(nodesForMatrix, distanceMatrixNormal, infoMatrixNormal);
+        distanceMatrixOWS = dmows;
+        infoMatrixOWS = imows;
+        timeMatrixNormal = ConfigureTimeMatrix(distanceMatrixNormal, infoMatrixNormal);
+        timeMatrixOWS = ConfigureTimeMatrix(distanceMatrixOWS, infoMatrixOWS);
+        timeMatrixOWSStairsLifts = AdjustStairsLifts(timeMatrixOWS, infoMatrixOWS);
     }
 }
 
@@ -1356,7 +1410,7 @@ internal class Program
             Console.WriteLine("Unsuccessful Test");
         }*/
         /* DistanceMatrix distmat = new DistanceMatrix();
-        double[,] matrixResult = distmat.ConfigureTimeDistMatrix(matrixD, matrixE);
+        double[,] matrixResult = distmat.ConfigureTimeMatrix(matrixD, matrixE);
         for (int row = 0; row < matrixResult.GetLength(0); row++)
         {
             for (int col = 0; col < matrixResult.GetLength(1); col++)
@@ -1626,5 +1680,20 @@ internal class Program
         char[,] infoMatrix2 = result.z; */
 
         //Console.WriteLine(dm.NearCongestionTime());
+
+        /* var(x, y, z) = mb.BuildNormalMatrices();
+        for (int row = 0; row < y.GetLength(0); row++)
+        {
+            for (int col = 0; col < y.GetLength(1); col++)
+            {
+                Console.Write(y[row, col]); //also output the value
+                if (col != y.Length - 1)
+                {
+                    Console.Write(", ");
+                }
+            }
+            Console.WriteLine();
+        }
+        Console.WriteLine();*/ 
     }   
 }
