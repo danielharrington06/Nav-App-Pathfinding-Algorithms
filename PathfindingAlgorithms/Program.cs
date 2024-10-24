@@ -1783,8 +1783,5 @@ internal class Program
         }
         Console.WriteLine();
         Console.WriteLine("Elapsed={0}",sw.Elapsed);
-
-        
-
     }   
 }
