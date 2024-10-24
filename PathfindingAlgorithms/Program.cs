@@ -30,7 +30,7 @@ public class MatrixBuilder
     public double[,] distanceMatrixOWS {get; private set;}
     public char[,] infoMatrixOWS {get; private set;}
 
-    private double[,] timeMatrixNormal;
+    public double[,] timeMatrixNormal;
     public double[,] timeMatrixOWS {get; private set;}
 
     public double[,] timeMatrixOWSStairsLifts {get; private set;}
@@ -404,7 +404,7 @@ public class DijkstraPathfinder
         distanceMatrix = mb.distanceMatrixOWS;
         infoMatrix = mb.infoMatrixOWS;
 
-        startNode = 0; // get from user interface stuff
+        startNode = 1; // get from user interface stuff
         targetNode = 76; // get from user interface stuff
 
         dijkstraDistances = new double[numberOfNodes];
@@ -432,7 +432,7 @@ public class DijkstraPathfinder
         distanceMatrix = new double[numberOfNodes,numberOfNodes];
         infoMatrix = new char[numberOfNodes,numberOfNodes];
 
-        startNode = 0; // get from user interface stuff
+        startNode = 1; // get from user interface stuff
         targetNode = 0; // get from user interface stuff
 
         dijkstraDistances = new double[numberOfNodes];
@@ -453,6 +453,9 @@ public class DijkstraPathfinder
     one node to the same, and an edge of this type does not exist in the database.
      */
     public double[] DijkstrasAlgorithm(double[,] matrix, int startNode) {
+        
+        // convert from node id to index in array
+        int startNodeIndex = Array.IndexOf(nodesForMatrix, startNode);
 
         // to keep track of visited locations to not go to a previously visited node and to stay efficient
         bool[] visitedNodes = new bool[numberOfNodes];
@@ -462,10 +465,10 @@ public class DijkstraPathfinder
         // initial setup
         for (int i = 0; i < numberOfNodes; i++) {
             visitedNodes[i] = false;
-            dijkstraDistances[i] = matrix[startNode, i];
+            dijkstraDistances[i] = matrix[startNodeIndex, i];
         }
         
-        int currentNodeIndex = Array.IndexOf(nodesForMatrix, startNode);
+        int currentNodeIndex = startNodeIndex;
 
         // setup variables before while loop
         double distanceToNode;
@@ -475,6 +478,9 @@ public class DijkstraPathfinder
 
         // repeats as long as there is at least one unvisited node
         while (visitedNodes.Contains(false)) {
+
+            if (currentNodeIndex == 80) {
+            }
             visitedNodes[currentNodeIndex] = true;
             distanceToNode = dijkstraDistances[currentNodeIndex];
 
@@ -512,6 +518,14 @@ public class DijkstraPathfinder
                     }
                 }
             }
+            /* if (lowestValIndex == -1) {
+                Console.WriteLine(currentNodeIndex);
+                for (int m = 0; m < dijkstraDistances.Length; m++) {
+                    if (!visitedNodes[m]) {
+                        Console.Write(Convert.ToString(dijkstraDistances[m]) + ", ");
+                    }
+                }
+            } */
             currentNodeIndex = lowestValIndex;
         }
 
@@ -591,7 +605,7 @@ public class DijkstraPathfinder
         int targetNodeIndex = Array.IndexOf(nodesForMatrix, targetNode);
 
         // use a list to store path as it will change in size
-        List<int> dijkstraPath = [targetNodeIndex];
+        List<int> dijkstraPath = [targetNode];
 
         int currentNodeIndex = targetNodeIndex;
         int currentNode = targetNode;
@@ -612,8 +626,9 @@ public class DijkstraPathfinder
             possibleNodes.Clear();
             for (int i = 0; i < numberOfNodes; i++) {
                 // add optimal edges to list
+                
                 if (Math.Round(dijkstraDistances[currentNodeIndex] - attachedEdges[i], 1) == dijkstraDistances[i]) {
-                    if (!dijkstraPath.Contains(i)){
+                    if (!dijkstraPath.Contains(nodesForMatrix[i])){ // fix issue here with i should lookup node id
                         possibleNodes.Add(i);
                     }
                 }
@@ -1134,14 +1149,11 @@ internal class Program
     {
         // start:
         MatrixBuilder mb = new MatrixBuilder();
-        DijkstraPathfinder dp = new DijkstraPathfinder(mb);
-        FloydPathfinder fp = new FloydPathfinder();
-        DatabaseHelper db = new DatabaseHelper();
-
-        /* // build all matrices
+        // build all matrices
         mb.BuildMatricesForPathfinding();
+        DijkstraPathfinder dp = new DijkstraPathfinder(mb);
 
-        // on click/enter:
+        /* // on click/enter:
         // receive data from UI about start node and target node
         // now do Dijkstra's
         dp.CarryOutAndInterpretDijkstras(); */
@@ -1756,14 +1768,20 @@ internal class Program
 
         Stopwatch sw = new Stopwatch();
         sw.Start();
-        mb.BuildMatricesForPathfinding();
-        double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixOWSStairsLifts, 0);
+        //Console.WriteLine(mb.timeMatrixOWSStairsLifts[24,80]);
+        double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixOWSStairsLifts, 1);
+        int tNode = 92;
+        List<int> dpath = dp.FindDijkstrasPath(mb.timeMatrixOWSStairsLifts, dd, 1, tNode);
         sw.Stop();
+        Console.WriteLine("Time to node " + Convert.ToString(tNode) + ": " + Convert.ToString(dd[Array.IndexOf(mb.nodesForMatrix, tNode)]));
 
-
-        for (int i = 0; i < dd.Length; i++) {
+        /* for (int i = 0; i < dd.Length; i++) {
             Console.Write(Convert.ToString(dd[i]) + ", ");
+        } */
+        for (int i = 0; i < dpath.Count; i++) {
+            Console.Write(Convert.ToString(dpath[i]) + ", ");
         }
+        Console.WriteLine();
         Console.WriteLine("Elapsed={0}",sw.Elapsed);
 
         
