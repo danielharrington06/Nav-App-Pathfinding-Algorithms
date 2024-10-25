@@ -1766,7 +1766,18 @@ internal class Program
         }
         Console.WriteLine();*/ 
 
-        Stopwatch sw = new Stopwatch();
+        /* int counter = 0;
+
+        for (int i = 0; i < mb.infoMatrixOWS.GetLength(0); i++) {
+            for (int j = 0; j < mb.infoMatrixOWS.GetLength(0); j++) {
+                if (mb.infoMatrixOWS[i,j] == 'L') {
+                    counter++;
+                }
+            }
+        }
+        Console.WriteLine(counter); */
+
+        /* Stopwatch sw = new Stopwatch();
         sw.Start();
         //Console.WriteLine(mb.timeMatrixOWSStairsLifts[24,80]);
         double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixOWSStairsLifts, 1);
@@ -1775,13 +1786,27 @@ internal class Program
         sw.Stop();
         Console.WriteLine("Time to node " + Convert.ToString(tNode) + ": " + Convert.ToString(dd[Array.IndexOf(mb.nodesForMatrix, tNode)]));
 
-        /* for (int i = 0; i < dd.Length; i++) {
+        for (int i = 0; i < dd.Length; i++) {
             Console.Write(Convert.ToString(dd[i]) + ", ");
-        } */
+        }
         for (int i = 0; i < dpath.Count; i++) {
             Console.Write(Convert.ToString(dpath[i]) + ", ");
         }
         Console.WriteLine();
-        Console.WriteLine("Elapsed={0}",sw.Elapsed);
+        Console.WriteLine("Elapsed={0}",sw.Elapsed); */
+        Console.WriteLine("Lifts");
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[94, 95]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[96, 97]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[94, 108]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[95, 108]);
+        Console.WriteLine("Stairs");
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[61, 72]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[54, 77]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[78, 51]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[76, 17]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[10, 13]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[23, 79]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[80, 25]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[73, 95]);
     }   
 }
