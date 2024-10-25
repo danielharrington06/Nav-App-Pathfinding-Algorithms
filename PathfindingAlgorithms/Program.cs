@@ -67,7 +67,7 @@ public class MatrixBuilder
         useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
 
         // get user settings for step free access
-        stepFree = false; // false means normal person
+        stepFree = true; // false means normal person
 
         // set non null values for array/matrices
         numberOfNodes = db.GetNumberOfNodes();
