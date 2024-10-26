@@ -21,20 +21,19 @@ public class MatrixBuilder
     private bool useTimeOfDayForCalculationDB;
     private bool useTimeOfDayForCalculation;
 
-    private bool stepFree;
+    public bool stepFree {get; private set;}
 
     public int[] nodesForMatrix {get; private set;}
 
-    private double[,] distanceMatrixNormal;
-    private char[,] infoMatrixNormal;
+    public double[,] distanceMatrixDefault {get; private set;}
+    public char[,] infoMatrixDefault {get; private set;}
 
-    public double[,] distanceMatrixOWS {get; private set;}
-    public char[,] infoMatrixOWS {get; private set;}
+    public double[,] distanceMatrixOneWay {get; private set;}
+    public char[,] infoMatrixOneWay {get; private set;}
 
-    public double[,] timeMatrixNormal;
-    public double[,] timeMatrixOWS {get; private set;}
+    public double[,] timeMatrixDefault;
 
-    public double[,] timeMatrixOWSStairsLifts {get; private set;}
+    public double[,] timeMatrixStairsLifts {get; private set;}
 
     public int numberOfNodes {get; private set;}
 
@@ -74,16 +73,15 @@ public class MatrixBuilder
         numberOfNodes = db.GetNumberOfNodes();
         nodesForMatrix = new int[numberOfNodes];
 
-        distanceMatrixNormal = new double[numberOfNodes, numberOfNodes];
-        infoMatrixNormal = new char[numberOfNodes, numberOfNodes];
+        distanceMatrixDefault = new double[numberOfNodes, numberOfNodes];
+        infoMatrixDefault = new char[numberOfNodes, numberOfNodes];
 
-        distanceMatrixOWS = new double[numberOfNodes, numberOfNodes];
-        infoMatrixOWS = new char[numberOfNodes, numberOfNodes];
+        distanceMatrixOneWay = new double[numberOfNodes, numberOfNodes];
+        infoMatrixOneWay = new char[numberOfNodes, numberOfNodes];
 
-        timeMatrixNormal = new double[numberOfNodes, numberOfNodes];
-        timeMatrixOWS = new double[numberOfNodes, numberOfNodes];
+        timeMatrixDefault = new double[numberOfNodes, numberOfNodes];
 
-        timeMatrixOWSStairsLifts = new double[numberOfNodes, numberOfNodes];
+        timeMatrixStairsLifts = new double[numberOfNodes, numberOfNodes];
     }
 
     // methods
@@ -352,14 +350,18 @@ public class MatrixBuilder
 
         var(nfm, dmn, imn) = BuildNormalMatrices();
         nodesForMatrix = nfm;
-        distanceMatrixNormal = dmn;
-        infoMatrixNormal = imn;
-        var(dmows, imows) = BuildOWSMatrices(nodesForMatrix, distanceMatrixNormal, infoMatrixNormal);
-        distanceMatrixOWS = dmows;
-        infoMatrixOWS = imows;
-        timeMatrixNormal = ConfigureTimeMatrix(distanceMatrixNormal, infoMatrixNormal);
-        timeMatrixOWS = ConfigureTimeMatrix(distanceMatrixOWS, infoMatrixOWS);
-        timeMatrixOWSStairsLifts = AdjustStairsLifts(timeMatrixOWS, infoMatrixOWS);
+        distanceMatrixDefault = dmn;
+        infoMatrixDefault = imn;
+        var(dmows, imows) = BuildOWSMatrices(nodesForMatrix, distanceMatrixDefault, infoMatrixDefault);
+        distanceMatrixOneWay = dmows;
+        infoMatrixOneWay = imows;
+        timeMatrixDefault = ConfigureTimeMatrix(distanceMatrixDefault, infoMatrixDefault);
+        if (!stepFree) {
+            timeMatrixStairsLifts = AdjustStairsLifts(ConfigureTimeMatrix(distanceMatrixOneWay, infoMatrixOneWay), infoMatrixOneWay);
+        }
+        else {
+            timeMatrixStairsLifts = AdjustStairsLifts(timeMatrixDefault, infoMatrixDefault);
+        }
     }
 }
 
@@ -404,9 +406,16 @@ public class DijkstraPathfinder
         numberOfNodes = mb.numberOfNodes;
 
         nodesForMatrix = mb.nodesForMatrix;
-        timeMatrix = mb.timeMatrixOWSStairsLifts;
-        distanceMatrix = mb.distanceMatrixOWS;
-        infoMatrix = mb.infoMatrixOWS;
+        timeMatrix = mb.timeMatrixStairsLifts;
+        if (mb.stepFree) {
+            distanceMatrix = mb.distanceMatrixOneWay;
+            infoMatrix = mb.infoMatrixOneWay;
+        }
+        else {
+            distanceMatrix = mb.distanceMatrixDefault;
+            infoMatrix = mb.infoMatrixDefault;
+        }
+        
 
         startNode = 1; // get from user interface stuff
         targetNode = 76; // get from user interface stuff
@@ -1818,7 +1827,7 @@ internal class Program
         sw.Start();
         double[,] getAnywhereMatrix = new double[mb.numberOfNodes, mb.numberOfNodes];
         for (int i = 0; i < mb.numberOfNodes; i++) {
-            double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixOWSStairsLifts, i+1);
+            double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixStairsLifts, i+1);
             for (int j = 0; j < dd.Length; j++)
             { //write data to temp list
                 getAnywhereMatrix[i, j] = dd[i];
@@ -1831,7 +1840,7 @@ internal class Program
 
         sw.Reset();
         sw.Start();
-        var(x,y) = fp.FloydsAlgorithm(mb.timeMatrixOWSStairsLifts);
+        var(x,y) = fp.FloydsAlgorithm(mb.timeMatrixStairsLifts);
         double[,] FloydMatrix = x;
         sw.Stop();
 
