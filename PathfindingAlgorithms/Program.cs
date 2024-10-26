@@ -67,7 +67,7 @@ public class MatrixBuilder
         useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
 
         // get user settings for step free access
-        stepFree = true; // false means using stairs
+        stepFree = false; // false means using stairs
 
         // set non null values for array/matrices
         numberOfNodes = db.GetNumberOfNodes();
@@ -1195,7 +1195,7 @@ internal class Program
                     if (!matrix1[i, j].Equals(matrix2[i, j]))
                     {
                         areEqual = false;
-                        Console.WriteLine(i.ToString() +","+ j.ToString());
+                        //Console.WriteLine(i.ToString() +","+ j.ToString());
                     }
                 }
             }
@@ -1791,23 +1791,23 @@ internal class Program
         }
         Console.WriteLine(counter); */
 
-        /* Stopwatch sw = new Stopwatch();
+        Stopwatch sw = new Stopwatch();
         sw.Start();
         //Console.WriteLine(mb.timeMatrixOWSStairsLifts[24,80]);
-        double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixOWSStairsLifts, 1);
-        int tNode = 92;
-        List<int> dpath = dp.FindDijkstrasPath(mb.timeMatrixOWSStairsLifts, dd, 1, tNode);
+        double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixStairsLifts, 5);
+        int tNode = 74;
+        List<int> dpath = dp.FindDijkstrasPath(mb.timeMatrixStairsLifts, dd, 5, tNode);
         sw.Stop();
         Console.WriteLine("Time to node " + Convert.ToString(tNode) + ": " + Convert.ToString(dd[Array.IndexOf(mb.nodesForMatrix, tNode)]));
 
-        for (int i = 0; i < dd.Length; i++) {
+        /* for (int i = 0; i < dd.Length; i++) {
             Console.Write(Convert.ToString(dd[i]) + ", ");
-        }
+        } */
         for (int i = 0; i < dpath.Count; i++) {
             Console.Write(Convert.ToString(dpath[i]) + ", ");
         }
         Console.WriteLine();
-        Console.WriteLine("Elapsed={0}",sw.Elapsed); */
+        Console.WriteLine("Elapsed={0}",sw.Elapsed);
         /* Console.WriteLine("Lifts");
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[94, 95]);
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[96, 97]);
@@ -1823,14 +1823,14 @@ internal class Program
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[80, 25]);
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[73, 95]); */
 
-        Stopwatch sw = new Stopwatch();
+        /* Stopwatch sw = new Stopwatch();
         sw.Start();
-        double[,] getAnywhereMatrix = new double[mb.numberOfNodes, mb.numberOfNodes];
+        double[,] dijkstraMatrix = new double[mb.numberOfNodes, mb.numberOfNodes];
         for (int i = 0; i < mb.numberOfNodes; i++) {
             double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixStairsLifts, i+1);
             for (int j = 0; j < dd.Length; j++)
             { //write data to temp list
-                getAnywhereMatrix[i, j] = dd[i];
+                dijkstraMatrix[i, j] = dd[j];
             }
         }
         sw.Stop();
@@ -1841,17 +1841,19 @@ internal class Program
         sw.Reset();
         sw.Start();
         var(x,y) = fp.FloydsAlgorithm(mb.timeMatrixStairsLifts);
-        double[,] FloydMatrix = x;
+        double[,] floydMatrix = x;
         sw.Stop();
 
         Console.WriteLine("Floyd's Algorithm:");
         Console.WriteLine("Elapsed={0}",sw.Elapsed);
 
-        if (MatrixCheckEqual(getAnywhereMatrix, FloydMatrix)) {
+
+        if (MatrixCheckEqual(dijkstraMatrix, floydMatrix)) {
             Console.WriteLine("The Matrices are equal");
         }
         else {
             Console.WriteLine("The matrices are not equal");
         }
+        Console.WriteLine(Convert.ToString(floydMatrix[107, 53]) + " " + Convert.ToString(dijkstraMatrix[4, 73])); */
     }   
 }
