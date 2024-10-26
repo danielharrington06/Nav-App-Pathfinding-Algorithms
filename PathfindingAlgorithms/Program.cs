@@ -304,7 +304,8 @@ public class MatrixBuilder
             }
         }
 
-        return isNearCongestionTime;
+        //return isNearCongestionTime;
+        return true;
     }
 
     /**
@@ -1808,6 +1809,11 @@ internal class Program
         }
         Console.WriteLine();
         Console.WriteLine("Elapsed={0}",sw.Elapsed);
+
+        double distance = dp.CalculateDistance(dpath, mb.distanceMatrixOneWay, mb.infoMatrixOneWay);
+        Console.WriteLine(distance);
+        TimeSpan eta = dp.EstimateTimeOfArrival(dp.ConvertSecsToTimeFormat(dp.EstimateTime(dd, tNode)));
+        Console.WriteLine(eta);
         /* Console.WriteLine("Lifts");
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[94, 95]);
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[96, 97]);
