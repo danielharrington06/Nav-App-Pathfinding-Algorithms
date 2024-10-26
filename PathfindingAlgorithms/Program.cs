@@ -7,6 +7,7 @@ using Google.Protobuf.WellKnownTypes;
 using MySql.Data.MySqlClient;
 using MySql.Data.MySqlClient.Authentication;// include MySQL package
 using System.Diagnostics;
+using Org.BouncyCastle.Math.EC;
 
 
 public class MatrixBuilder
@@ -67,7 +68,7 @@ public class MatrixBuilder
         useTimeOfDayForCalculation = useTimeOfDayForCalculationUser && useTimeOfDayForCalculationDB;
 
         // get user settings for step free access
-        stepFree = true; // false means normal person
+        stepFree = true; // false means using stairs
 
         // set non null values for array/matrices
         numberOfNodes = db.GetNumberOfNodes();
@@ -321,7 +322,10 @@ public class MatrixBuilder
             for (int rowNum = 0; rowNum < numberOfNodes; rowNum++) {
                 for (int colNum = 0; colNum < numberOfNodes; colNum++) {
                     if (infoMatrix[rowNum, colNum] == 'S') {
-                        timeMatrix[rowNum, colNum] = 0;
+                        if (rowNum != 13 && colNum != 13) {
+                            timeMatrix[rowNum, colNum] = 0;
+                        }
+                        
                     }
                 }
             }
@@ -1152,13 +1156,14 @@ internal class Program
         // build all matrices
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
+        FloydPathfinder fp = new FloydPathfinder();
 
         /* // on click/enter:
         // receive data from UI about start node and target node
         // now do Dijkstra's
         dp.CarryOutAndInterpretDijkstras(); */
 
-        /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
+        bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
             bool areEqual = true;
             // Check if both arrays are null or reference the same array
             if (ReferenceEquals(matrix1, matrix2)) areEqual = true;
@@ -1187,7 +1192,7 @@ internal class Program
             }
 
             return areEqual;
-        } */
+        }
         
         // DD Test 8
         double[,] matrixJ = new double[6, 6] {
@@ -1794,7 +1799,7 @@ internal class Program
         }
         Console.WriteLine();
         Console.WriteLine("Elapsed={0}",sw.Elapsed); */
-        Console.WriteLine("Lifts");
+        /* Console.WriteLine("Lifts");
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[94, 95]);
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[96, 97]);
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[94, 108]);
@@ -1807,6 +1812,37 @@ internal class Program
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[10, 13]);
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[23, 79]);
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[80, 25]);
-        Console.WriteLine(mb.timeMatrixOWSStairsLifts[73, 95]);
+        Console.WriteLine(mb.timeMatrixOWSStairsLifts[73, 95]); */
+
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        double[,] getAnywhereMatrix = new double[mb.numberOfNodes, mb.numberOfNodes];
+        for (int i = 0; i < mb.numberOfNodes; i++) {
+            double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixOWSStairsLifts, i+1);
+            for (int j = 0; j < dd.Length; j++)
+            { //write data to temp list
+                getAnywhereMatrix[i, j] = dd[i];
+            }
+        }
+        sw.Stop();
+        
+        Console.WriteLine("Dijkstra's Algorithm:");
+        Console.WriteLine("Elapsed={0}",sw.Elapsed);
+
+        sw.Reset();
+        sw.Start();
+        var(x,y) = fp.FloydsAlgorithm(mb.timeMatrixOWSStairsLifts);
+        double[,] FloydMatrix = x;
+        sw.Stop();
+
+        Console.WriteLine("Floyd's Algorithm:");
+        Console.WriteLine("Elapsed={0}",sw.Elapsed);
+
+        if (MatrixCheckEqual(getAnywhereMatrix, FloydMatrix)) {
+            Console.WriteLine("The Matrices are equal");
+        }
+        else {
+            Console.WriteLine("The matrices are not equal");
+        }
     }   
 }
