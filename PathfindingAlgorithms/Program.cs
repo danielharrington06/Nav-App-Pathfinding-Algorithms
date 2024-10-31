@@ -1167,11 +1167,12 @@ public class DatabaseHelper
         double[,] mapEdges = new double[mapEdgeValues.Count,4];
 
         for (int i = 0; i < mapEdgeValues.Count; i++) {
-            for (int j = 0; i < mapEdgeValues[i].Count; j++) {
-                double[i, j] = Convert.ToDouble(mapEdgeValues[i][j]);
+            for (int j = 0; j < mapEdgeValues[i].Count; j++) {
+                mapEdges[i, j] = Convert.ToDouble(mapEdgeValues[i][j]);
             }
         }
 
+        return mapEdges;
     }
 }
 
@@ -1810,7 +1811,7 @@ internal class Program
         }
         Console.WriteLine(counter); */
 
-        Stopwatch sw = new Stopwatch();
+        /* Stopwatch sw = new Stopwatch();
         sw.Start();
         //Console.WriteLine(mb.timeMatrixOWSStairsLifts[24,80]);
         double[] dd = dp.DijkstrasAlgorithm(mb.timeMatrixStairsLifts, 5);
@@ -1822,7 +1823,7 @@ internal class Program
         /* for (int i = 0; i < dd.Length; i++) {
             Console.Write(Convert.ToString(dd[i]) + ", ");
         } */
-        for (int i = 0; i < dpath.Count; i++) {
+        /* for (int i = 0; i < dpath.Count; i++) {
             Console.Write(Convert.ToString(dpath[i]) + ", ");
         }
         Console.WriteLine();
@@ -1831,7 +1832,7 @@ internal class Program
         double distance = dp.CalculateDistance(dpath, mb.distanceMatrixOneWay, mb.infoMatrixOneWay);
         Console.WriteLine(distance);
         TimeSpan eta = dp.EstimateTimeOfArrival(dp.ConvertSecsToTimeFormat(dp.EstimateTime(dd, tNode)));
-        Console.WriteLine(eta);
+        Console.WriteLine(eta); */
         /* Console.WriteLine("Lifts");
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[94, 95]);
         Console.WriteLine(mb.timeMatrixOWSStairsLifts[96, 97]);
@@ -1879,5 +1880,14 @@ internal class Program
             Console.WriteLine("The matrices are not equal");
         }
         Console.WriteLine(Convert.ToString(floydMatrix[107, 53]) + " " + Convert.ToString(dijkstraMatrix[4, 73])); */
+
+        var db = new DatabaseHelper();
+        var x = db.GetMapEdges();
+        for (int i = 0; i< x.GetLength(0); i++) {
+            for (int j = 0; j < x.GetLength(1); j++) {
+                Console.Write(Convert.ToString(x[i,j])+ ", ");
+            }
+            Console.WriteLine();
+        }
     }   
 }
