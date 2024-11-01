@@ -1906,10 +1906,11 @@ internal class Program
             Console.WriteLine();
         } */
         while (true) {
-            Console.WriteLine("Enter new point: ");
+            Console.WriteLine("Enter new edge: ");
             string inpt = "" + Console.ReadLine();
             db.SaveMapEdge2(inpt);
             Console.WriteLine(inpt + " saved");
+            Console.WriteLine();
         }
     }   
 }
