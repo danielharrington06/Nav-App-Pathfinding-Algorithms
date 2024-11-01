@@ -1907,9 +1907,9 @@ internal class Program
         } */
         while (true) {
             Console.WriteLine("Enter new point: ");
-            string inpt = Console.ReadLine();
+            string inpt = "" + Console.ReadLine();
             db.SaveMapEdge2(inpt);
-            Console.WriteLine(input + " saved");
+            Console.WriteLine(inpt + " saved");
         }
     }   
 }
