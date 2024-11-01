@@ -1183,6 +1183,13 @@ public class DatabaseHelper
         // query db
         ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES ("+Convert.ToString(point1x)+", "+Convert.ToString(point1y)+", " +Convert.ToString(point2x)+", " +Convert.ToString(point2y)+", 1, 0)");
     }
+
+    /**
+    This procedure is only used in development to enter edges into SQL server
+    */
+    public void SaveMapEdge2(string points) {
+        ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES (" + points + ", 1, 0)");
+    }
 }
 
 internal class Program
@@ -1898,6 +1905,11 @@ internal class Program
             }
             Console.WriteLine();
         } */
-        db.SaveMapEdge(4, 3, 2, 1);
+        while (true) {
+            Console.WriteLine("Enter new point: ");
+            string inpt = Console.ReadLine();
+            db.SaveMapEdge2(inpt);
+            Console.WriteLine(input + " saved");
+        }
     }   
 }
