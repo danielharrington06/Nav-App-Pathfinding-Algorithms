@@ -1163,8 +1163,7 @@ public class DatabaseHelper
 
         // query db
         int floorNum = Convert.ToInt32(floor);
-        var (mapEdgeFeilds, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge WHERE floor_"+floorNum+" = 0");;
-        
+        var (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge WHERE floor_"+floorNum+" = 1");
 
         double[,] mapEdges = new double[mapEdgeValues.Count,4];
 
@@ -1907,13 +1906,14 @@ internal class Program
             }
             Console.WriteLine();
         } */
-        while (true) {
+        /* while (true) {
             Console.WriteLine("Enter new edge: ");
             string inpt = "";
             inpt = "" + Console.ReadLine();
             db.SaveMapEdge2(inpt);
             Console.WriteLine(inpt + " saved");
             Console.WriteLine();
-        }
+        } */
+        db.GetMapEdges(true);
     }   
 }
