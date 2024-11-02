@@ -1160,14 +1160,10 @@ public class DatabaseHelper
     This function uses SQL to get all the edges that it should draw on the map.
     */
     public double[,] GetMapEdges(bool floor) {
-        var (mapEdgeFeilds, mapEdgeValues);
+
         // query db
-        if (!floor) { // floor 0
-            (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge WHERE floor_1 = 0");
-        }
-        else { // floor 1
-            (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge WHERE floor_1 = 1");
-        }
+        int floorNum = Convert.ToInt32(floor);
+        var (mapEdgeFeilds, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge WHERE floor_"+floorNum+" = 0");;
         
 
         double[,] mapEdges = new double[mapEdgeValues.Count,4];
