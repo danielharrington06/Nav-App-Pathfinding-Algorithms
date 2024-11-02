@@ -1159,10 +1159,16 @@ public class DatabaseHelper
     /**
     This function uses SQL to get all the edges that it should draw on the map.
     */
-    public double[,] GetMapEdges() {
-        
+    public double[,] GetMapEdges(bool floor) {
+        var (mapEdgeFeilds, mapEdgeValues);
         // query db
-        var (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge");
+        if (!floor) { // floor 0
+            (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge WHERE floor_1 = 0");
+        }
+        else { // floor 1
+            (mapEdgeFields, mapEdgeValues) = ExecuteSelect("SELECT point_1_x, point_1_y, point_2_x, point_2_y FROM tblMapEdge WHERE floor_1 = 1");
+        }
+        
 
         double[,] mapEdges = new double[mapEdgeValues.Count,4];
 
@@ -1188,7 +1194,7 @@ public class DatabaseHelper
     This procedure is only used in development to enter edges into SQL server
     */
     public void SaveMapEdge2(string points) {
-        ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES (" + points + ", 1, 0)");
+        ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES (" + points + ")");
     }
 }
 
@@ -1907,7 +1913,8 @@ internal class Program
         } */
         while (true) {
             Console.WriteLine("Enter new edge: ");
-            string inpt = "" + Console.ReadLine();
+            string inpt = "";
+            inpt = "" + Console.ReadLine();
             db.SaveMapEdge2(inpt);
             Console.WriteLine(inpt + " saved");
             Console.WriteLine();
