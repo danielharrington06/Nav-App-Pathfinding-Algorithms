@@ -1177,7 +1177,7 @@ public class DatabaseHelper
     }
 
     /**
-    This function is only used in testing but uses SQL to save a map edge
+    This procedure is only used in testing but uses SQL to save a map edge
     */
     public void SaveMapEdge(float point1x, float point1y, float point2x, float point2y) {
 
@@ -1191,6 +1191,27 @@ public class DatabaseHelper
     public void SaveMapEdge2(string points) {
         ExecuteInsert("INSERT INTO tblMapEdge (point_1_x, point_1_y, point_2_x, point_2_y, floor_0, floor_1) VALUES (" + points + ")");
     }
+
+    /**
+    This function is used to get the coordinates of all edges in the map
+    */
+    public double[,] GetEdgeCoordinates(bool floor) {
+
+        // query db
+        int floorNum = Convert.ToInt32(floor);
+        var (edgeFields, edgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null and (tblEdge.edge_type_id = \"C\" or tblEdge.edge_type_id = \"I\") and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + " )");
+
+        double[,] edges = new double[edgeValues.Count,4];
+
+        for (int i = 0; i < edgeValues.Count; i++) {
+            for (int j = 0; j < edgeValues[i].Count; j++) {
+                edges[i, j] = Convert.ToDouble(edgeValues[i][j]);
+            }
+        }
+
+        return edges;
+    }
+
 }
 
 internal class Program
@@ -1898,22 +1919,22 @@ internal class Program
         }
         Console.WriteLine(Convert.ToString(floydMatrix[107, 53]) + " " + Convert.ToString(dijkstraMatrix[4, 73])); */
 
-        var db = new DatabaseHelper();
-        /* var x = db.GetMapEdges();
+        /* var db = new DatabaseHelper();
+        var x = db.GetEdgeCoordinates(false);
         for (int i = 0; i< x.GetLength(0); i++) {
             for (int j = 0; j < x.GetLength(1); j++) {
                 Console.Write(Convert.ToString(x[i,j])+ ", ");
             }
             Console.WriteLine();
         } */
-        while (true) {
+        /* while (true) {
             Console.WriteLine("Enter new edge: ");
             string inpt = "";
             inpt = "" + Console.ReadLine();
             db.SaveMapEdge2(inpt);
             Console.WriteLine(inpt + " saved");
             Console.WriteLine();
-        }
+        } */
         //db.GetMapEdges(true);
     }   
 }
