@@ -1212,6 +1212,26 @@ public class DatabaseHelper
         return edges;
     }
 
+    /**
+    This function uses SQL to get all edge ID's
+    */
+    public int[] GetEdgeIDs() {
+
+        // query db
+        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id from tblEdge");
+        int numberOfEdges = edgeValues.Count;
+        Console.WriteLine(numberOfEdges);
+
+        // return array
+        int[] edgeIDs = new int[numberOfEdges];
+
+        for (int i = 0; i < numberOfEdges; i++) {
+            edgeIDs[i] = Convert.ToInt32(edgeValues[i][0]);
+        }
+
+        return edgeIDs;
+    }
+
 }
 
 internal class Program
@@ -1919,8 +1939,8 @@ internal class Program
         }
         Console.WriteLine(Convert.ToString(floydMatrix[107, 53]) + " " + Convert.ToString(dijkstraMatrix[4, 73])); */
 
-        /* var db = new DatabaseHelper();
-        var x = db.GetEdgeCoordinates(false);
+        var db = new DatabaseHelper();
+        /*var x = db.GetEdgeCoordinates(false);
         for (int i = 0; i< x.GetLength(0); i++) {
             for (int j = 0; j < x.GetLength(1); j++) {
                 Console.Write(Convert.ToString(x[i,j])+ ", ");
@@ -1936,5 +1956,10 @@ internal class Program
             Console.WriteLine();
         } */
         //db.GetMapEdges(true);
+
+        var x = db.GetEdgeIDs();
+        foreach (var y in x) {
+            Console.WriteLine(y);
+        }
     }   
 }
