@@ -1553,7 +1553,9 @@ internal class Program
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
 
-        var x = dp.EvaluatePossibleNodes("G7", "G7");
+        var x = dp.EvaluatePossibleNodes("C2", "C8");
+        var (sN, tN) = dp.DetermineStartAndTargetNodes(x);
+        Console.WriteLine(sN + " " + tN);
         for (int i = 0; i < x.Count; i++) {
             for (int j = 0; j < x[i].Count; j++) {
                 Console.Write(x[i][j] + ", ");
