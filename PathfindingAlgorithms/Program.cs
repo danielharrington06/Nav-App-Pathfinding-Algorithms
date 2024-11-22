@@ -8,6 +8,8 @@ using MySql.Data.MySqlClient;
 using MySql.Data.MySqlClient.Authentication;// include MySQL package
 using System.Diagnostics;
 using Org.BouncyCastle.Math.EC;
+using System;
+using System.Text.RegularExpressions;
 
 
 public class MatrixBuilder
@@ -1193,45 +1195,183 @@ public class DatabaseHelper
     }
 
     /**
-    This function is used to get the coordinates of all edges in the map
+    This function uses SQL to get the coordinates of all edges: the simple and hard ones
     */
     public double[,] GetEdgeCoordinates(bool floor) {
 
-        // query db
-        int floorNum = Convert.ToInt32(floor);
-        var (edgeFields, edgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null and (tblEdge.edge_type_id = \"C\" or tblEdge.edge_type_id = \"I\") and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + " )");
+        int floorNum;
+        if (!floor) { // floor = false so 0
+            floorNum = 0;
+        }
+        else { // floor = true so 1
+            floorNum = 1;
+        }
 
-        double[,] edges = new double[edgeValues.Count,4];
+        // simple is where there are not vertices involved
+        // get all coordinates for non vertex edges
+        var (simpleEdgeFields, simpleEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id left join tblEdgeVertex ON tblEdge.edge_id = tblEdgeVertex.edge_id where t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null and tblEdgeVertex.edge_id is null and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by tblEdge.edge_id asc");
+        int numSimpleEdges = simpleEdgeValues.Count;
 
-        for (int i = 0; i < edgeValues.Count; i++) {
-            for (int j = 0; j < edgeValues[i].Count; j++) {
-                edges[i, j] = Convert.ToDouble(edgeValues[i][j]);
+        // hard is where there are vertices involved
+        // get all distinct vertexed edge id's and node coordinates
+        var (hardUniqueEdgeFields, hardUniqueEdgeValues) = ExecuteSelect("select distinct tblEdge.edge_id, t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate from tblEdge inner join tblEdgeVertex on tblEdge.edge_id = tblEdgeVertex.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") and t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null order by edge_id asc;");
+        // get all edge vertexes ordered first by edge id to match with above, then by order
+        var (hardCoordinateEdgeFields, hardCoordinateEdgeValues) = ExecuteSelect("select tblEdgeVertex.edge_id, tblEdgeVertex.x_coordinate, tblEdgeVertex.y_coordinate from tbledgeVertex inner join tblEdge on tblEdge.edge_id = tblEdgeVertex.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") and t1.x_coordinate is not null and t1.y_coordinate is not null and t2.x_coordinate is not null and t2.y_coordinate is not null order by edge_id asc, vertex_order asc");
+
+        // define array to store coordinates
+        // number of lines is equal to the number of simple edges (naturally) plus the number of hard edge id's plus the number of hard edge vertices
+        // this is because a single hard edge (with no vertices (despite the contradiction of it being hard)) would have one line
+        // one vertex for this edge would make two lines, two vertices, three lines total
+        // therefore for hard edges, total lines is hard distinct edges + hard edge vertices
+        double[,] edges = new double[numSimpleEdges + hardUniqueEdgeValues.Count + hardCoordinateEdgeValues.Count,4];
+
+        for (int i = 0; i < numSimpleEdges; i++) {
+            for (int j = 0; j < 4; j++) {
+                edges[i, j] = Convert.ToDouble(simpleEdgeValues[i][j]);
             }
+        }
+
+        // add a row to hardCoordinateEdgeValues so that we can always get the vertexIndex+1, otherwise runtime error
+        hardCoordinateEdgeValues.Add(new List<object> {-1, 0, 0});
+
+        // now go through hard edges
+        int currentEdgeIndex = 0; // the index from distinct edge id's
+        int vertexIndex = 0; // increments for each new row in coordinate edgevalues
+        int writeRow = numSimpleEdges; // which row in edges currently writing to
+        while (currentEdgeIndex < hardUniqueEdgeValues.Count) { // stop once exhausted all unique edge id's
+            int currentEdgeID = (int)hardUniqueEdgeValues[currentEdgeIndex][0];
+            // loops through the section where the egde id's are all the same
+
+            //first add line for from node 1 to first vertex
+            edges[writeRow, 0] = Convert.ToDouble(hardUniqueEdgeValues[currentEdgeIndex][1]);
+            edges[writeRow, 1] = Convert.ToDouble(hardUniqueEdgeValues[currentEdgeIndex][2]);
+            edges[writeRow, 2] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][1]);
+            edges[writeRow, 3] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][2]);
+
+            writeRow++;
+
+            while ((int)hardCoordinateEdgeValues[vertexIndex+1][0] == currentEdgeID) {
+                // connect vertex index to vertex index + 1
+                edges[writeRow, 0] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][1]);
+                edges[writeRow, 1] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][2]);
+                edges[writeRow, 2] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex + 1][1]);
+                edges[writeRow, 3] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex + 1][2]);
+
+                vertexIndex++;
+                writeRow++;
+            }
+            // now add line for from last vertex to node 2
+            edges[writeRow, 0] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][1]);
+            edges[writeRow, 1] = Convert.ToDouble(hardCoordinateEdgeValues[vertexIndex][2]);
+            edges[writeRow, 2] = Convert.ToDouble(hardUniqueEdgeValues[currentEdgeIndex][3]);
+            edges[writeRow, 3] = Convert.ToDouble(hardUniqueEdgeValues[currentEdgeIndex][4]);
+
+            vertexIndex++;
+            writeRow++;
+            currentEdgeIndex++;
         }
 
         return edges;
     }
 
     /**
-    This function uses SQL to get all edge ID's
+    This function uses SQL to get all room connector lines.
     */
-    public int[] GetEdgeIDs() {
+    public double[,] GetRoomConnectionCoordinates(bool floor) {
 
-        // query db
-        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id from tblEdge");
-        int numberOfEdges = edgeValues.Count;
-        Console.WriteLine(numberOfEdges);
-
-        // return array
-        int[] edgeIDs = new int[numberOfEdges];
-
-        for (int i = 0; i < numberOfEdges; i++) {
-            edgeIDs[i] = Convert.ToInt32(edgeValues[i][0]);
+        int floorNum;
+        
+        if (!floor) { // floor = false so 0
+            floorNum = 0;
+        }
+        else { // floor = true so 1
+            floorNum = 1;
         }
 
-        return edgeIDs;
-    }
+        // query for coordinates and angle for connecting room to edge
+        var (roomEdgeFields, roomEdgeValues) = ExecuteSelect("select t1.x_coordinate, t1.y_coordinate,  t2.x_coordinate, t2.y_coordinate, tR.x_coordinate, tR.y_coordinate, tR.door_angle from tblRoom tR inner join tblEdge on tR.edge_id = tblEdge.edge_id inner join tblNode t1 on tblEdge.node_1_id = t1.node_id inner join tblNode t2 on tblEdge.node_2_id = t2.node_id where tR.x_coordinate is not null and tR.y_coordinate is not null and tR.door_angle is not null and (t1.floor = " + floorNum + " or t2.floor = " + floorNum + ") order by tR.edge_id asc");
 
+        // query for coordinates for connecting room to node
+        var (roomNodeFields, roomNodeValues) = ExecuteSelect("select tN.x_coordinate, tN.y_coordinate, tR.x_coordinate, tR.y_coordinate from tblRoom tR inner join tblnode tN on tN.node_id = tR.node_id where tR.x_coordinate is not null and tR.y_coordinate is not null and tN.x_coordinate is not null and tN.y_coordinate is not null and (tN.floor = " + floorNum +")");
+
+        // get number of each type
+        int numEdgeConnects = roomEdgeValues.Count;
+        int numNodeConnects = roomNodeValues.Count;
+
+        // a single edge or node connect means a single line is needed
+        double[,] connectors = new double[numEdgeConnects + numNodeConnects,4];
+
+        //iterate through room edge values, finding the intersection points and filling them in
+        for (int i = 0; i < numEdgeConnects; i++) {
+            double xIntercept, yIntercept;
+            // deal with possibility that angle might be 90 or -90 which leads to undefined tan output
+            if (Convert.ToDouble(roomEdgeValues[i][6]) == 90 || Convert.ToDouble(roomEdgeValues[i][6]) == -90) {
+                // check if edge is horizontal
+                if (Convert.ToDouble(roomEdgeValues[i][1]) == Convert.ToDouble(roomEdgeValues[i][3])) {
+                    // door angle is straight up or down and the edge is exactly horizontal
+                    xIntercept = Convert.ToDouble(roomEdgeValues[i][4]);
+                    yIntercept = Convert.ToDouble(roomEdgeValues[i][1]);
+                }
+                else {
+                    // edge is not perpendicular but room connector goes straight up
+                    // really should never execute, but have to code to be safe
+
+                    // derived from equation for a line
+                    // m1 is gradient of the edge
+                    double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
+
+                    xIntercept = Convert.ToDouble(roomEdgeValues[i][4]);
+                    yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
+
+                }
+            }
+            // deal with possibility that edge angle might be 0 or 180 which leads to infinite edge gradient
+            else if (Convert.ToDouble(roomEdgeValues[i][6]) == 0 || Convert.ToDouble(roomEdgeValues[i][6]) == 180) {
+                // check if edge is vertical
+                if (Convert.ToDouble(roomEdgeValues[i][0]) == Convert.ToDouble(roomEdgeValues[i][2])) {
+                    // door angle is straight left or right and the edge is exactly vertical
+                    xIntercept = Convert.ToDouble(roomEdgeValues[i][0]);
+                    yIntercept = Convert.ToDouble(roomEdgeValues[i][5]);
+                }
+                else {
+                    //Debug.Log(roomEdgeValues[i][0] + " " + roomEdgeValues[i][2]);
+                    //Debug.Log("Error: room connector is vertical but edge is not");
+                    xIntercept = double.NaN;
+                    yIntercept = double.NaN;
+
+                }
+            }
+            else {
+                // derived from equation for a line
+                // m1 is gradient of the edge
+                double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
+                
+                // m2 is gradient of the room connector
+                double m2 = Convert.ToDouble(MathF.Tan(Convert.ToSingle(roomEdgeValues[i][6])*MathF.PI/180));
+ 
+                xIntercept = (m1*Convert.ToDouble(roomEdgeValues[i][0]) - m2*Convert.ToDouble(roomEdgeValues[i][4]) + Convert.ToDouble(roomEdgeValues[i][5]) - Convert.ToDouble(roomEdgeValues[i][1])) / (m1 - m2);
+                yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
+            }
+
+            
+            //update connectors array
+            connectors[i, 0] = Convert.ToDouble(roomEdgeValues[i][4]);
+            connectors[i, 1] = Convert.ToDouble(roomEdgeValues[i][5]);
+            connectors[i, 2] = xIntercept;
+            connectors[i, 3] = yIntercept;
+                
+        }
+
+        //iterate through room node fields, copying data in
+        for (int i = 0; i < numNodeConnects; i++) {
+            for (int j = 0; j < 4; j++) {
+                connectors[i + numEdgeConnects, j] = Convert.ToDouble(roomNodeValues[i][j]);
+            }
+        }
+
+
+        return connectors;
+    }
 }
 
 internal class Program
@@ -1243,14 +1383,16 @@ internal class Program
         // build all matrices
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
-        FloydPathfinder fp = new FloydPathfinder();
+        //FloydPathfinder fp = new FloydPathfinder();
+
+        #region OldCode
 
         /* // on click/enter:
         // receive data from UI about start node and target node
         // now do Dijkstra's
         dp.CarryOutAndInterpretDijkstras(); */
 
-        bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
+        /* bool MatrixCheckEqual<T>(T[,] matrix1, T[,] matrix2) {
             bool areEqual = true;
             // Check if both arrays are null or reference the same array
             if (ReferenceEquals(matrix1, matrix2)) areEqual = true;
@@ -1279,7 +1421,7 @@ internal class Program
             }
 
             return areEqual;
-        }
+        } */
         
         // DD Test 8
         double[,] matrixJ = new double[6, 6] {
@@ -1939,7 +2081,7 @@ internal class Program
         }
         Console.WriteLine(Convert.ToString(floydMatrix[107, 53]) + " " + Convert.ToString(dijkstraMatrix[4, 73])); */
 
-        var db = new DatabaseHelper();
+        //var db = new DatabaseHelper();
         /*var x = db.GetEdgeCoordinates(false);
         for (int i = 0; i< x.GetLength(0); i++) {
             for (int j = 0; j < x.GetLength(1); j++) {
@@ -1957,9 +2099,15 @@ internal class Program
         } */
         //db.GetMapEdges(true);
 
-        var x = db.GetEdgeIDs();
+        /* var x = db.GetEdgeIDs();
         foreach (var y in x) {
             Console.WriteLine(y);
-        }
+        } */
+
+        //var x = db.GetRoomConnectionCoordinates(true);
+
+        #endregion OldCode
+
+
     }   
 }
