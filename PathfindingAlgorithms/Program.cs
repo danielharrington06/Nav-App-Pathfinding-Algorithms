@@ -395,7 +395,7 @@ public class DijkstraPathfinder
 
     public double estimatedDistance;
 
-
+    DatabaseHelper db = new DatabaseHelper();
 
     // constructors
 
@@ -743,12 +743,94 @@ public class DijkstraPathfinder
     }
 
     /**
+    This function works out the possible nodes for the start room and end room by interfacing with the database.
+    A list of lists is returned where the first row is the possible nodes for the startRoom and the second row is the 
+    possible nodes for the targetRoom.
+    */
+    public List<List<int>> EvaluatePossibleNodes(string startRoom, string targetRoom) {
+
+        // first deal with the startRoom
+        // query the db for room_id, edge_id, node_id from startRoom record
+        string[] startRoomInfo = db.GetRoomConnectionType(startRoom);
+
+        // start list of possible nodes
+        List<int> startRoomPossNodes = [];
+        
+        // figure out if connected to node or edge
+        if (startRoomInfo[1] == "" && startRoomInfo[2] != "") { // edge_id is null and node_id is not
+            // connected to node
+            startRoomPossNodes.Add(Convert.ToInt32(startRoomInfo[2]));
+            // this is the only possible node
+        }
+        else if (startRoomInfo[1] != "" && startRoomInfo[2] == "") { // edge_id is not null and node_id is
+            // connected to edge
+            // query db for edge info to figure out if it is directional and the nodes
+            string[] startEdgeInfo = db.GetEdgeRecord(startRoomInfo[1]);
+            
+            if (startEdgeInfo[5] == "True") { // directional edge 
+                // so use node 2 as only node as user can at first only walk from room to this edge
+                startRoomPossNodes.Add(Convert.ToInt32(startEdgeInfo[2]));
+            }
+            else { // non directional
+                // so user can leave room and go to either node
+                startRoomPossNodes.Add(Convert.ToInt32(startEdgeInfo[1]));
+                startRoomPossNodes.Add(Convert.ToInt32(startEdgeInfo[2]));
+            }
+        }
+
+        // now deal with the targetRoom
+        // query the db for room_id, edge_id, node_id from startRoom record
+        string[] targetRoomInfo = db.GetRoomConnectionType(targetRoom);
+
+        // start list of possible nodes
+        List<int> targetRoomPossNodes = [];
+        
+        // figure out if connected to node or edge
+        if (targetRoomInfo[1] == "" && targetRoomInfo[2] != "") { // edge_id is null and node_id is not
+            // connected to node
+            targetRoomPossNodes.Add(Convert.ToInt32(targetRoomInfo[2]));
+            // this is the only possible node
+        }
+        else if (targetRoomInfo[1] != "" && targetRoomInfo[2] == "") { // edge_id is not null and node_id is
+            // connected to edge
+            // query db for edge info to figure out if it is directional and the nodes
+            string[] targetEdgeInfo = db.GetEdgeRecord(targetRoomInfo[1]);
+            
+            if (targetEdgeInfo[5] == "True") { // directional edge 
+                // so use node 2 as only node as user can only reach room through this node
+                targetRoomPossNodes.Add(Convert.ToInt32(targetEdgeInfo[1]));
+            }
+            else { // non directional
+                // so user can reach room through either node
+                targetRoomPossNodes.Add(Convert.ToInt32(targetEdgeInfo[1]));
+                targetRoomPossNodes.Add(Convert.ToInt32(targetEdgeInfo[2]));
+            }
+        }
+
+        List<List<int>> possibleNodes = [[], []];
+        for (int i = 0; i < startRoomPossNodes.Count; i++) {
+            possibleNodes[0].Add(startRoomPossNodes[i]);
+        }
+        for (int i = 0; i < targetRoomPossNodes.Count; i++) {
+            possibleNodes[1].Add(targetRoomPossNodes[i]);
+        }
+
+        return possibleNodes;
+    }
+
+    /**
+    This function figures out which nodes should be set as the start node and target node.
+    It takes a list of lists representing the possible nodes for each room and sets the startNode 
+    and targetNodefields in the class to the correct nodes.
+    */
+
+    /**
     This procedure links together all of the necessary functions for carrying out Dijkstra's
     Algorithm for a typical user, including returning the time, eta, distance.
     */
     public void CarryOutAndInterpretDijkstras() {
 
-        dijkstraDistances = DijkstrasAlgorithm(timeMatrix, targetNode);
+        dijkstraDistances = DijkstrasAlgorithm(timeMatrix, startNode);
         estimatedTimeInSecs = EstimateTime(dijkstraDistances, targetNode);
         estimatedTime = ConvertSecsToTimeFormat(estimatedTimeInSecs);
         estimatedTimeOfArrival = EstimateTimeOfArrival(estimatedTime);
@@ -1372,6 +1454,44 @@ public class DatabaseHelper
 
         return connectors;
     }
+
+    /**
+    This function uses SQL to get the room_id, node_id, edge_id for a roomID.
+    It will be used to figure out if a room is connected to node or edge.
+    */
+    public string[] GetRoomConnectionType(string room_id) {
+
+        // query db
+        var (roomFields, roomValues) = ExecuteSelect("select room_id, edge_id, node_id from tblRoom where room_id = \"" + room_id + "\"");
+
+        // now format for return
+        string[] roomInfo = new string[3];
+        roomInfo[0] = "" + Convert.ToString(roomValues[0][0]);
+        roomInfo[1] = "" + Convert.ToString(roomValues[0][1]);
+        roomInfo[2] = "" + Convert.ToString(roomValues[0][2]);
+
+        return roomInfo;
+    }
+
+    /**
+    This function uses SQL to get an edges record
+    */
+    public string[] GetEdgeRecord(string edge_id) {
+
+        // query db
+        var (edgeFields, edgeValues) = ExecuteSelect("select edge_id, node_1_id, node_2_id, weight, edge_type_id, one_way from tblEdge where edge_id = \"" + edge_id + "\"");
+
+        // now format for return
+        string[] edgeInfo = new string[6];
+        edgeInfo[0] = "" + Convert.ToString(edgeValues[0][0]);
+        edgeInfo[1] = "" + Convert.ToString(edgeValues[0][1]);
+        edgeInfo[2] = "" + Convert.ToString(edgeValues[0][2]);
+        edgeInfo[3] = "" + Convert.ToString(edgeValues[0][3]);
+        edgeInfo[4] = "" + Convert.ToString(edgeValues[0][4]);
+        edgeInfo[5] = "" + Convert.ToString(edgeValues[0][5]);
+
+        return edgeInfo;
+    }
 }
 
 internal class Program
@@ -1383,6 +1503,14 @@ internal class Program
         // build all matrices
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
+
+        var x = dp.EvaluatePossibleNodes("G7", "G7");
+        for (int i = 0; i < x.Count; i++) {
+            for (int j = 0; j < x[i].Count; j++) {
+                Console.Write(x[i][j] + ", ");
+            }
+            Console.WriteLine();
+        } 
         //FloydPathfinder fp = new FloydPathfinder();
 
         #region OldCode
