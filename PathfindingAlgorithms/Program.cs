@@ -823,6 +823,55 @@ public class DijkstraPathfinder
     It takes a list of lists representing the possible nodes for each room and sets the startNode 
     and targetNodefields in the class to the correct nodes.
     */
+    public (int, int) DetermineStartAndTargetNodes(List<List<int>> possibleNodes) {
+
+        // store num nodes for each so decision can be made on what to do
+        int startRoomNumNodes = possibleNodes[0].Count;
+        int targetRoomNumNodes = possibleNodes[1].Count;
+
+        // variables that will be returned
+        int startNode;
+        int targetNode;
+
+        if (startRoomNumNodes == 1 && targetRoomNumNodes == 1) {
+            // if just one possible node for startRoom and targetRoom, choose them
+            startNode = possibleNodes[0][0];
+            targetNode = possibleNodes[1][0];
+            Console.WriteLine("Just one node for start and target, so set start and target to these values.");
+        }
+        else if (startRoomNumNodes == 1 && targetRoomNumNodes == 2) {
+            // if one node for start and two for target
+            // carry out dijkstras and estimate time from each possible final node to targetroom
+            // and add this to the dijkstra time for each node
+            // 1 dijkstra, two options to choose from
+            Console.WriteLine("One node for start and two for target, so carry out Dijkstra's from start, calculate time from each possible final node to room and add this to the dijkstra time for each node.");
+            Console.WriteLine("Select the nodes that give the fastest total time.");
+        }
+        else if (startRoomNumNodes == 2 && targetRoomNumNodes == 1) {
+            // if two nodes for start and one for target
+            // carry out dijkstras from each start node and estimate time from target room to each possible start node
+            // and add this to dijkstra time for each node
+            // 2 dijkstra, two options to choose from
+            Console.WriteLine("Two nodes for start and one for target, so carry out Dijkstra's from each start node and estimate time from room to each possible start node and add this to the dijkstra time for each node.");
+            Console.WriteLine("Select the nodes that give the fastest total time.");
+        }
+        else if (startRoomNumNodes == 2 && targetRoomNumNodes == 2) {
+            // if two nodes for start and two for target
+            // carry out dijkstras from each start node and estimate time from target room to each possible start node
+            // and time from each possible final node to target room
+            // and add this to the dijkstra time for each node
+            // 2 dijkstra, four options to choose from
+            Console.WriteLine("Two nodes for start and two for target, so carry out Dijkstra's from each start node and estimate time from room to each possible start node time from each possible final node to target room and add this to the dijkstra time for each node.");
+            Console.WriteLine("Select the nodes that give the fastest total time.");
+        }
+
+        // delete these - just for initital testing
+        startNode = possibleNodes[0][0];
+        targetNode = possibleNodes[1][0];
+
+
+        return (startNode, targetNode);
+    }
 
     /**
     This procedure links together all of the necessary functions for carrying out Dijkstra's
