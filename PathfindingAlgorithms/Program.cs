@@ -843,7 +843,6 @@ public class DijkstraPathfinder
             // if just one possible node for startRoom and targetRoom, choose them
             startNode = possibleNodes[0][0];
             targetNode = possibleNodes[1][0];
-            Console.WriteLine("Just one node for start and target, so set start and target to these values.");
         }
         else if (startRoomNumNodes == 1 && targetRoomNumNodes == 2) {
             // if one node for start and two for target
@@ -1747,9 +1746,12 @@ internal class Program
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
 
-        var x = dp.EvaluatePossibleNodes("C2", "C8");
-        var (sN, tN) = dp.DetermineStartAndTargetNodes(x, "C2", "C8");
-        Console.WriteLine(sN + " " + tN);
+        string startRoom = "SH";
+        string targetRoom = "F9";
+
+        var x = dp.EvaluatePossibleNodes(startRoom, targetRoom);
+        var (sN, tN) = dp.DetermineStartAndTargetNodes(x, startRoom, targetRoom);
+        Console.WriteLine(sN + ", " + tN);
         for (int i = 0; i < x.Count; i++) {
             for (int j = 0; j < x[i].Count; j++) {
                 Console.Write(x[i][j] + ", ");
