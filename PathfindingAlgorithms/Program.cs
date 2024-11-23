@@ -883,13 +883,15 @@ public class DijkstraPathfinder
             int SnodeID1 = possibleNodes[0][0];
             int SnodeID2 = possibleNodes[0][1];
 
+            int Tnode = possibleNodes[1][0];
+
             //do dijkstra one then dijkstra two
             double[] dijkDists1 = DijkstrasAlgorithm(timeMatrix, SnodeID1);
             double[] dijkDists2 = DijkstrasAlgorithm(timeMatrix, SnodeID2);
 
             // calc possible times for each node
-            double possTimeSNode1 = EstimateTime(dijkDists1, SnodeID1) + EstimateNodeRoomTime(SnodeID1, startRoom);
-            double possTimeSNode2 = EstimateTime(dijkDists2, SnodeID2) + EstimateNodeRoomTime(SnodeID2, startRoom);
+            double possTimeSNode1 = EstimateTime(dijkDists1, Tnode) + EstimateNodeRoomTime(SnodeID1, startRoom);
+            double possTimeSNode2 = EstimateTime(dijkDists2, Tnode) + EstimateNodeRoomTime(SnodeID2, startRoom);
 
             // choose start node with minimum time
             if (possTimeSNode1 <= possTimeSNode2) {
@@ -902,7 +904,7 @@ public class DijkstraPathfinder
             }
 
             // only one option for target node
-            targetNode = possibleNodes[1][0];
+            targetNode = Tnode;
         }
         else if (startRoomNumNodes == 2 && targetRoomNumNodes == 2) {
             // if two nodes for start and two for target
@@ -923,10 +925,10 @@ public class DijkstraPathfinder
             double[] dijkDists2 = DijkstrasAlgorithm(timeMatrix, SnodeID2);
 
             // calc possible times for each node to each node
-            double possTimeSNode1TNode1 = EstimateTime(dijkDists1, SnodeID1) + EstimateNodeRoomTime(SnodeID1, startRoom) + EstimateNodeRoomTime(TnodeID1, targetRoom);
-            double possTimeSNode2TNode1 = EstimateTime(dijkDists2, SnodeID2) + EstimateNodeRoomTime(SnodeID2, startRoom) + EstimateNodeRoomTime(TnodeID1, targetRoom);
-            double possTimeSNode1TNode2 = EstimateTime(dijkDists1, SnodeID1) + EstimateNodeRoomTime(SnodeID1, startRoom) + EstimateNodeRoomTime(TnodeID2, targetRoom);
-            double possTimeSNode2TNode2 = EstimateTime(dijkDists2, SnodeID2) + EstimateNodeRoomTime(SnodeID2, startRoom) + EstimateNodeRoomTime(TnodeID2, targetRoom);
+            double possTimeSNode1TNode1 = EstimateTime(dijkDists1, TnodeID1) + EstimateNodeRoomTime(SnodeID1, startRoom) + EstimateNodeRoomTime(TnodeID1, targetRoom);
+            double possTimeSNode2TNode1 = EstimateTime(dijkDists2, TnodeID1) + EstimateNodeRoomTime(SnodeID2, startRoom) + EstimateNodeRoomTime(TnodeID1, targetRoom);
+            double possTimeSNode1TNode2 = EstimateTime(dijkDists1, TnodeID2) + EstimateNodeRoomTime(SnodeID1, startRoom) + EstimateNodeRoomTime(TnodeID2, targetRoom);
+            double possTimeSNode2TNode2 = EstimateTime(dijkDists2, TnodeID2) + EstimateNodeRoomTime(SnodeID2, startRoom) + EstimateNodeRoomTime(TnodeID2, targetRoom);
 
             // find the minimum time of possible times
             double[] possTimes = new double[4] {possTimeSNode1TNode1, possTimeSNode2TNode1, possTimeSNode1TNode2, possTimeSNode2TNode2};
@@ -1746,8 +1748,8 @@ internal class Program
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
 
-        string startRoom = "SH";
-        string targetRoom = "F9";
+        string startRoom = "G12";
+        string targetRoom = "P1";
 
         var x = dp.EvaluatePossibleNodes(startRoom, targetRoom);
         var (sN, tN) = dp.DetermineStartAndTargetNodes(x, startRoom, targetRoom);
