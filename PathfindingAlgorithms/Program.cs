@@ -21,7 +21,7 @@ public class MatrixBuilder
 
     private bool useTimeOfDayForCalculationUser;    
     private bool useTimeOfDayForCalculationDB;
-    private bool useTimeOfDayForCalculation;
+    public bool useTimeOfDayForCalculation;
 
     public bool stepFree {get; private set;}
 
@@ -260,7 +260,7 @@ public class MatrixBuilder
     It takes both these values, considers what type of path it is, so it can then assign a velocity, then uses the
     time = distance / speed formula to return a value for time.
     */
-    private double EstimateTimeFromDistance(double distance, char info, bool useSlowVal) {
+    public double EstimateTimeFromDistance(double distance, char info, bool useSlowVal) {
         
         double realVelocity;
         double time;
@@ -396,11 +396,15 @@ public class DijkstraPathfinder
     public double estimatedDistance;
 
     DatabaseHelper db = new DatabaseHelper();
+    MatrixBuilder mb;
 
     // constructors
 
     // if database    
-    public DijkstraPathfinder(MatrixBuilder mb){
+    public DijkstraPathfinder(MatrixBuilder matrixbuild){
+
+        // i tried something weird here
+        mb = matrixbuild;
 
         // need to get from db
         timeSecsModifier = 0;
@@ -434,6 +438,8 @@ public class DijkstraPathfinder
 
     // if testing
     public DijkstraPathfinder(double[,] matrix) {
+
+        mb = new MatrixBuilder();
 
         // need to get from db
         timeSecsModifier = 0;
@@ -751,21 +757,21 @@ public class DijkstraPathfinder
 
         // first deal with the startRoom
         // query the db for room_id, edge_id, node_id from startRoom record
-        string[] startRoomInfo = db.GetRoomConnectionType(startRoom);
+        string[] startRoomRecord = db.GetRoomRecord(startRoom);
 
         // start list of possible nodes
         List<int> startRoomPossNodes = [];
         
         // figure out if connected to node or edge
-        if (startRoomInfo[1] == "" && startRoomInfo[2] != "") { // edge_id is null and node_id is not
+        if (startRoomRecord[2] == "" && startRoomRecord[3] != "") { // edge_id is null and node_id is not
             // connected to node
-            startRoomPossNodes.Add(Convert.ToInt32(startRoomInfo[2]));
+            startRoomPossNodes.Add(Convert.ToInt32(startRoomRecord[3]));
             // this is the only possible node
         }
-        else if (startRoomInfo[1] != "" && startRoomInfo[2] == "") { // edge_id is not null and node_id is
+        else if (startRoomRecord[2] != "" && startRoomRecord[3] == "") { // edge_id is not null and node_id is
             // connected to edge
             // query db for edge info to figure out if it is directional and the nodes
-            string[] startEdgeInfo = db.GetEdgeRecord(startRoomInfo[1]);
+            string[] startEdgeInfo = db.GetEdgeRecord(Convert.ToInt32(startRoomRecord[2]));
             
             if (startEdgeInfo[5] == "True") { // directional edge 
                 // so use node 2 as only node as user can at first only walk from room to this edge
@@ -780,21 +786,21 @@ public class DijkstraPathfinder
 
         // now deal with the targetRoom
         // query the db for room_id, edge_id, node_id from startRoom record
-        string[] targetRoomInfo = db.GetRoomConnectionType(targetRoom);
+        string[] targetRoomRecord = db.GetRoomRecord(targetRoom);
 
         // start list of possible nodes
         List<int> targetRoomPossNodes = [];
         
         // figure out if connected to node or edge
-        if (targetRoomInfo[1] == "" && targetRoomInfo[2] != "") { // edge_id is null and node_id is not
+        if (targetRoomRecord[2] == "" && targetRoomRecord[3] != "") { // edge_id is null and node_id is not
             // connected to node
-            targetRoomPossNodes.Add(Convert.ToInt32(targetRoomInfo[2]));
+            targetRoomPossNodes.Add(Convert.ToInt32(targetRoomRecord[3]));
             // this is the only possible node
         }
-        else if (targetRoomInfo[1] != "" && targetRoomInfo[2] == "") { // edge_id is not null and node_id is
+        else if (targetRoomRecord[2] != "" && targetRoomRecord[3] == "") { // edge_id is not null and node_id is
             // connected to edge
             // query db for edge info to figure out if it is directional and the nodes
-            string[] targetEdgeInfo = db.GetEdgeRecord(targetRoomInfo[1]);
+            string[] targetEdgeInfo = db.GetEdgeRecord(Convert.ToInt32(targetRoomRecord[2]));
             
             if (targetEdgeInfo[5] == "True") { // directional edge 
                 // so use node 2 as only node as user can only reach room through this node
@@ -823,15 +829,15 @@ public class DijkstraPathfinder
     It takes a list of lists representing the possible nodes for each room and sets the startNode 
     and targetNodefields in the class to the correct nodes.
     */
-    public (int, int) DetermineStartAndTargetNodes(List<List<int>> possibleNodes) {
+    public (int, int) DetermineStartAndTargetNodes(List<List<int>> possibleNodes, string startRoom, string targetRoom) {
 
         // store num nodes for each so decision can be made on what to do
         int startRoomNumNodes = possibleNodes[0].Count;
         int targetRoomNumNodes = possibleNodes[1].Count;
 
         // variables that will be returned
-        int startNode;
-        int targetNode;
+        int startNode = -1;
+        int targetNode = -1;
 
         if (startRoomNumNodes == 1 && targetRoomNumNodes == 1) {
             // if just one possible node for startRoom and targetRoom, choose them
@@ -844,16 +850,60 @@ public class DijkstraPathfinder
             // carry out dijkstras and estimate time from each possible final node to targetroom
             // and add this to the dijkstra time for each node
             // 1 dijkstra, two options to choose from
-            Console.WriteLine("One node for start and two for target, so carry out Dijkstra's from start, calculate time from each possible final node to room and add this to the dijkstra time for each node.");
-            Console.WriteLine("Select the nodes that give the fastest total time.");
+
+            // define t(arget) node id 1 and 2
+            int TnodeID1 = possibleNodes[1][0];
+            int TnodeID2 = possibleNodes[1][1];
+
+            double[] dijkDists = DijkstrasAlgorithm(timeMatrix, possibleNodes[0][0]);
+
+            // calc possible times for each node
+            double possTimeTNode1 = EstimateTime(dijkDists, TnodeID1) + EstimateNodeRoomTime(TnodeID1, targetRoom);
+            double possTimeTNode2 = EstimateTime(dijkDists, TnodeID2) + EstimateNodeRoomTime(TnodeID2, targetRoom);
+
+            // only one option for start node
+            startNode = possibleNodes[0][0];
+
+            // choose target node with minimum time
+            if (possTimeTNode1 <= possTimeTNode2) {
+                // choose target node1
+                targetNode = TnodeID1;
+            }
+            else {
+                // choose target node2
+                targetNode = TnodeID2;
+            }
         }
         else if (startRoomNumNodes == 2 && targetRoomNumNodes == 1) {
             // if two nodes for start and one for target
             // carry out dijkstras from each start node and estimate time from target room to each possible start node
             // and add this to dijkstra time for each node
             // 2 dijkstra, two options to choose from
-            Console.WriteLine("Two nodes for start and one for target, so carry out Dijkstra's from each start node and estimate time from room to each possible start node and add this to the dijkstra time for each node.");
-            Console.WriteLine("Select the nodes that give the fastest total time.");
+
+            // define s(tart) node id 1 and 2
+            int SnodeID1 = possibleNodes[0][0];
+            int SnodeID2 = possibleNodes[0][1];
+
+            //do dijkstra one then dijkstra two
+            double[] dijkDists1 = DijkstrasAlgorithm(timeMatrix, SnodeID1);
+            double[] dijkDists2 = DijkstrasAlgorithm(timeMatrix, SnodeID2);
+
+            // calc possible times for each node
+            double possTimeSNode1 = EstimateTime(dijkDists1, SnodeID1) + EstimateNodeRoomTime(SnodeID1, startRoom);
+            double possTimeSNode2 = EstimateTime(dijkDists2, SnodeID2) + EstimateNodeRoomTime(SnodeID2, startRoom);
+
+            // choose start node with minimum time
+            if (possTimeSNode1 <= possTimeSNode2) {
+                // choose start node1
+                startNode = SnodeID1;
+            }
+            else {
+                // choose start node2
+                startNode = SnodeID2;
+            }
+
+            // only one option for target node
+            targetNode = possibleNodes[1][0];
         }
         else if (startRoomNumNodes == 2 && targetRoomNumNodes == 2) {
             // if two nodes for start and two for target
@@ -861,16 +911,110 @@ public class DijkstraPathfinder
             // and time from each possible final node to target room
             // and add this to the dijkstra time for each node
             // 2 dijkstra, four options to choose from
-            Console.WriteLine("Two nodes for start and two for target, so carry out Dijkstra's from each start node and estimate time from room to each possible start node time from each possible final node to target room and add this to the dijkstra time for each node.");
-            Console.WriteLine("Select the nodes that give the fastest total time.");
+
+            // define s(tart) node id 1 and 2
+            int SnodeID1 = possibleNodes[0][0];
+            int SnodeID2 = possibleNodes[0][1];
+            // define t(arget) node id 1 and 2
+            int TnodeID1 = possibleNodes[1][0];
+            int TnodeID2 = possibleNodes[1][1];
+
+            //do dijkstra one then dijkstra two
+            double[] dijkDists1 = DijkstrasAlgorithm(timeMatrix, SnodeID1);
+            double[] dijkDists2 = DijkstrasAlgorithm(timeMatrix, SnodeID2);
+
+            // calc possible times for each node to each node
+            double possTimeSNode1TNode1 = EstimateTime(dijkDists1, SnodeID1) + EstimateNodeRoomTime(SnodeID1, startRoom) + EstimateNodeRoomTime(TnodeID1, targetRoom);
+            double possTimeSNode2TNode1 = EstimateTime(dijkDists2, SnodeID2) + EstimateNodeRoomTime(SnodeID2, startRoom) + EstimateNodeRoomTime(TnodeID1, targetRoom);
+            double possTimeSNode1TNode2 = EstimateTime(dijkDists1, SnodeID1) + EstimateNodeRoomTime(SnodeID1, startRoom) + EstimateNodeRoomTime(TnodeID2, targetRoom);
+            double possTimeSNode2TNode2 = EstimateTime(dijkDists2, SnodeID2) + EstimateNodeRoomTime(SnodeID2, startRoom) + EstimateNodeRoomTime(TnodeID2, targetRoom);
+
+            // find the minimum time of possible times
+            double[] possTimes = new double[4] {possTimeSNode1TNode1, possTimeSNode2TNode1, possTimeSNode1TNode2, possTimeSNode2TNode2};
+
+            int minIndex = 0;
+            for (int i = 1; i < possTimes.Length; i++) {
+                if (possTimes[i] < possTimes[minIndex]) {
+                    minIndex = i;
+                }
+            }
+
+            // assign start and target node values as appropriate
+            switch (minIndex) {
+                case 0:
+                    startNode = SnodeID1;
+                    targetNode = TnodeID1;
+                    break;
+                case 1:
+                    startNode = SnodeID2;
+                    targetNode = TnodeID1;
+                    break;
+                case 2:
+                    startNode = SnodeID1;
+                    targetNode = TnodeID2;
+                    break;
+                case 3:
+                    startNode = SnodeID2;
+                    targetNode = TnodeID2;
+                    break;
+            }
+        }
+        else {
+            // alert if an incorrect number of possible nodes were passed in
+            // problem is likely with EvaluatePossibleNodes function
+            Console.WriteLine("Invalid number of possible nodes returned.");
+            Console.WriteLine($"{startRoomNumNodes} nodes for startRoom and {targetRoomNumNodes} nodes for targetRoom.");
         }
 
-        // delete these - just for initital testing
-        startNode = possibleNodes[0][0];
-        targetNode = possibleNodes[1][0];
-
-
         return (startNode, targetNode);
+    }
+
+    /**
+    This function returns the time in seconds to travel from a given node to a room along the edge the room is on.
+    */
+    public double EstimateNodeRoomTime(int node_id, string room_id) {
+
+        // query db for given node record
+        string[] nodeRecord = db.GetNodeRecord(node_id);
+        // query db for room record
+        string[] roomRecord = db.GetRoomRecord(room_id);
+
+        // from room record query for edge, so can get other node
+        string[] edgeRecord = db.GetEdgeRecord(Convert.ToInt32(roomRecord[2]));
+        List<int> edgeNodes = [Convert.ToInt32(edgeRecord[1]), Convert.ToInt32(edgeRecord[2])];
+        // remove the node given to find the other node
+        edgeNodes.Remove(node_id);
+        int otherNode = edgeNodes[0];
+        // query for other node record to get x and y coordinates
+        string[] otherNodeRecord = db.GetNodeRecord(otherNode);
+
+        // define edge coordinates
+        double nodeX = Convert.ToDouble(nodeRecord[1]);
+        double nodeY = Convert.ToDouble(nodeRecord[2]);
+        double otherNodeX = Convert.ToDouble(otherNodeRecord[1]);
+        double otherNodeY = Convert.ToDouble(otherNodeRecord[2]);
+
+        // define room coordinates and angle
+        double roomX = Convert.ToDouble(roomRecord[4]);
+        double roomY = Convert.ToDouble(roomRecord[5]);
+        double angle = Convert.ToDouble(roomRecord[6]);
+        
+        var (xIntercept, yIntercept) = db.CalcIntersectionOfEdgeAndRoomConnector(nodeX, nodeY, otherNodeX, otherNodeY, roomX, roomY, angle);
+
+        // calculate distance from node to other node
+        double wholeEdgeDistance = Math.Sqrt(Math.Pow(nodeX-otherNodeX, 2) + Math.Pow(nodeY-otherNodeY, 2));
+
+        // calculate distance from node to intersection
+        double partialEdgeDistance = Math.Sqrt(Math.Pow(nodeX-xIntercept, 2) + Math.Pow(nodeY-yIntercept, 2));
+
+        // find partial real life distance of edge
+        double partialDistanceMetres = Convert.ToDouble(edgeRecord[3]) * (partialEdgeDistance / wholeEdgeDistance); // from 0 to 1
+
+        // estimate time from distance
+        double time = mb.EstimateTimeFromDistance(partialDistanceMetres, Convert.ToChar(edgeRecord[4]), false); 
+        // could change false to how it is usually defined, but decided not to
+
+        return time;
     }
 
     /**
@@ -1434,57 +1578,9 @@ public class DatabaseHelper
 
         //iterate through room edge values, finding the intersection points and filling them in
         for (int i = 0; i < numEdgeConnects; i++) {
-            double xIntercept, yIntercept;
-            // deal with possibility that angle might be 90 or -90 which leads to undefined tan output
-            if (Convert.ToDouble(roomEdgeValues[i][6]) == 90 || Convert.ToDouble(roomEdgeValues[i][6]) == -90) {
-                // check if edge is horizontal
-                if (Convert.ToDouble(roomEdgeValues[i][1]) == Convert.ToDouble(roomEdgeValues[i][3])) {
-                    // door angle is straight up or down and the edge is exactly horizontal
-                    xIntercept = Convert.ToDouble(roomEdgeValues[i][4]);
-                    yIntercept = Convert.ToDouble(roomEdgeValues[i][1]);
-                }
-                else {
-                    // edge is not perpendicular but room connector goes straight up
-                    // really should never execute, but have to code to be safe
 
-                    // derived from equation for a line
-                    // m1 is gradient of the edge
-                    double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
+            var (xIntercept, yIntercept) = CalcIntersectionOfEdgeAndRoomConnector(Convert.ToDouble(roomEdgeValues[i][0]), Convert.ToDouble(roomEdgeValues[i][1]), Convert.ToDouble(roomEdgeValues[i][2]), Convert.ToDouble(roomEdgeValues[i][3]), Convert.ToDouble(roomEdgeValues[i][4]), Convert.ToDouble(roomEdgeValues[i][5]), Convert.ToDouble(roomEdgeValues[i][6]));
 
-                    xIntercept = Convert.ToDouble(roomEdgeValues[i][4]);
-                    yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
-
-                }
-            }
-            // deal with possibility that edge angle might be 0 or 180 which leads to infinite edge gradient
-            else if (Convert.ToDouble(roomEdgeValues[i][6]) == 0 || Convert.ToDouble(roomEdgeValues[i][6]) == 180) {
-                // check if edge is vertical
-                if (Convert.ToDouble(roomEdgeValues[i][0]) == Convert.ToDouble(roomEdgeValues[i][2])) {
-                    // door angle is straight left or right and the edge is exactly vertical
-                    xIntercept = Convert.ToDouble(roomEdgeValues[i][0]);
-                    yIntercept = Convert.ToDouble(roomEdgeValues[i][5]);
-                }
-                else {
-                    //Debug.Log(roomEdgeValues[i][0] + " " + roomEdgeValues[i][2]);
-                    //Debug.Log("Error: room connector is vertical but edge is not");
-                    xIntercept = double.NaN;
-                    yIntercept = double.NaN;
-
-                }
-            }
-            else {
-                // derived from equation for a line
-                // m1 is gradient of the edge
-                double m1 = (Convert.ToDouble(roomEdgeValues[i][1]) - Convert.ToDouble(roomEdgeValues[i][3])) / (Convert.ToDouble(roomEdgeValues[i][0]) - Convert.ToDouble(roomEdgeValues[i][2]));
-                
-                // m2 is gradient of the room connector
-                double m2 = Convert.ToDouble(MathF.Tan(Convert.ToSingle(roomEdgeValues[i][6])*MathF.PI/180));
- 
-                xIntercept = (m1*Convert.ToDouble(roomEdgeValues[i][0]) - m2*Convert.ToDouble(roomEdgeValues[i][4]) + Convert.ToDouble(roomEdgeValues[i][5]) - Convert.ToDouble(roomEdgeValues[i][1])) / (m1 - m2);
-                yIntercept = m1*(xIntercept - Convert.ToDouble(roomEdgeValues[i][0])) + Convert.ToDouble(roomEdgeValues[i][1]);
-            }
-
-            
             //update connectors array
             connectors[i, 0] = Convert.ToDouble(roomEdgeValues[i][4]);
             connectors[i, 1] = Convert.ToDouble(roomEdgeValues[i][5]);
@@ -1502,6 +1598,61 @@ public class DatabaseHelper
 
 
         return connectors;
+    }
+
+    /**
+    This function uses coordinate geometry to find the intersection of a line defined by a set of coordinates
+    and a line defined by a start coordinate and an angle in degrees.
+    */
+    public (double, double) CalcIntersectionOfEdgeAndRoomConnector(double node1X, double node1Y, double node2X, double node2Y, double roomX, double roomY, double angle) {
+
+        double xIntercept, yIntercept;
+        // deal with possibility that angle might be 90 or -90 which leads to undefined tan output
+        if (Convert.ToDouble(angle) == 90 || Convert.ToDouble(angle) == -90) {
+            // check if edge is horizontal
+            if (Convert.ToDouble(node1Y) == Convert.ToDouble(node2Y)) {
+                // door angle is straight up or down and the edge is exactly horizontal
+                xIntercept = roomX;
+                yIntercept = node1Y;
+            }
+            else {
+                // edge is not perpendicular but room connector goes straight up
+                // really should never execute, but have to code to be safe
+                // derived from equation for a line
+                // m1 is gradient of the edge
+                double m1 = (Convert.ToDouble(node1Y) - Convert.ToDouble(node2Y)) / (Convert.ToDouble(node1X) - Convert.ToDouble(node2X));
+                xIntercept = Convert.ToDouble(roomX);
+                yIntercept = m1*(xIntercept - Convert.ToDouble(node1X)) + Convert.ToDouble(node1Y);
+            }
+        }
+        // deal with possibility that edge angle might be 0 or 180 which leads to infinite edge gradient
+        else if (Convert.ToDouble(angle) == 0 || Convert.ToDouble(angle) == 180) {
+            // check if edge is vertical
+            if (Convert.ToDouble(node1X) == Convert.ToDouble(node2X)) {
+                // door angle is straight left or right and the edge is exactly vertical
+                xIntercept = node1X;
+                yIntercept = roomY;
+            }
+            else {
+                //Debug.Log(roomEdgeValues[i][0] + " " + roomEdgeValues[i][2]);
+                //Debug.Log("Error: room connector is vertical but edge is not");
+                xIntercept = double.NaN;
+                yIntercept = double.NaN;
+            }
+        }
+        else {
+            // derived from equation for a line
+            // m1 is gradient of the edge
+            double m1 = (Convert.ToDouble(node1Y) - Convert.ToDouble(node2Y)) / (Convert.ToDouble(node1X) - Convert.ToDouble(node2X));
+            
+            // m2 is gradient of the room connector
+            double m2 = Convert.ToDouble(MathF.Tan(Convert.ToSingle(angle)*MathF.PI/180));
+
+            xIntercept = (m1*Convert.ToDouble(node1X) - m2*Convert.ToDouble(roomX) + Convert.ToDouble(roomY) - Convert.ToDouble(node1Y)) / (m1 - m2);
+            yIntercept = m1*(xIntercept - Convert.ToDouble(node1X)) + Convert.ToDouble(node1Y);
+        }
+
+        return (xIntercept, yIntercept);
     }
 
     /**
@@ -1523,9 +1674,9 @@ public class DatabaseHelper
     }
 
     /**
-    This function uses SQL to get an edges record
+    This function uses SQL to get an edge's record
     */
-    public string[] GetEdgeRecord(string edge_id) {
+    public string[] GetEdgeRecord(int edge_id) {
 
         // query db
         var (edgeFields, edgeValues) = ExecuteSelect("select edge_id, node_1_id, node_2_id, weight, edge_type_id, one_way from tblEdge where edge_id = \"" + edge_id + "\"");
@@ -1541,6 +1692,49 @@ public class DatabaseHelper
 
         return edgeInfo;
     }
+
+    /**
+    This function uses SQL to get an node's record
+    */
+    public string[] GetNodeRecord(int node_id) {
+
+        // query db
+        var (nodeFields, nodeValues) = ExecuteSelect("select node_id, x_coordinate, y_coordinate, floor, node_name, node_descript from tblNode where node_id = \"" + node_id + "\"");
+
+        // now format for return
+        string[] nodeInfo = new string[6];
+        nodeInfo[0] = "" + Convert.ToString(nodeValues[0][0]);
+        nodeInfo[1] = "" + Convert.ToString(nodeValues[0][1]);
+        nodeInfo[2] = "" + Convert.ToString(nodeValues[0][2]);
+        nodeInfo[3] = "" + Convert.ToString(nodeValues[0][3]);
+        nodeInfo[4] = "" + Convert.ToString(nodeValues[0][4]);
+        nodeInfo[5] = "" + Convert.ToString(nodeValues[0][5]);
+
+        return nodeInfo;
+    }
+
+    /**
+    This function uses SQL to get an node's record
+    */
+    public string[] GetRoomRecord(string room_id) {
+
+        // query db
+        var (roomFields, roomValues) = ExecuteSelect("select room_id, room_name, edge_id, node_id, x_coordinate, y_coordinate, door_angle, faculty_id, room_type from tblRoom where room_id = \"" + room_id + "\"");
+
+        // now format for return
+        string[] roomInfo = new string[9];
+        roomInfo[0] = "" + Convert.ToString(roomValues[0][0]);
+        roomInfo[1] = "" + Convert.ToString(roomValues[0][1]);
+        roomInfo[2] = "" + Convert.ToString(roomValues[0][2]);
+        roomInfo[3] = "" + Convert.ToString(roomValues[0][3]);
+        roomInfo[4] = "" + Convert.ToString(roomValues[0][4]);
+        roomInfo[5] = "" + Convert.ToString(roomValues[0][5]);
+        roomInfo[6] = "" + Convert.ToString(roomValues[0][6]);
+        roomInfo[7] = "" + Convert.ToString(roomValues[0][7]);
+        roomInfo[8] = "" + Convert.ToString(roomValues[0][8]);
+
+        return roomInfo;
+    }
 }
 
 internal class Program
@@ -1554,7 +1748,7 @@ internal class Program
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
 
         var x = dp.EvaluatePossibleNodes("C2", "C8");
-        var (sN, tN) = dp.DetermineStartAndTargetNodes(x);
+        var (sN, tN) = dp.DetermineStartAndTargetNodes(x, "C2", "C8");
         Console.WriteLine(sN + " " + tN);
         for (int i = 0; i < x.Count; i++) {
             for (int j = 0; j < x[i].Count; j++) {
