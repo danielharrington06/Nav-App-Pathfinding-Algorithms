@@ -385,13 +385,16 @@ public class DijkstraPathfinder
     private int startNode; // node id from nodesForMatrix
     private int targetNode; // node id from nodesForMatrix
 
+    private string startRoom;
+    private string targetRoom;
+
     private double[] dijkstraDistances;
 
     private double estimatedTimeInSecs;
-    private TimeSpan estimatedTime;
+    public TimeSpan estimatedTime;
     private TimeSpan estimatedTimeOfArrival;
 
-    List<int> dijkstraPath; // path of node id's
+    public List<int> dijkstraPath; // path of node id's
 
     public double estimatedDistance;
 
@@ -424,8 +427,11 @@ public class DijkstraPathfinder
         }
         
 
-        startNode = 1; // get from user interface stuff
-        targetNode = 76; // get from user interface stuff
+        startNode = -1; // get from user interface stuff
+        targetNode = -1; // get from user interface stuff
+
+        startRoom = "";
+        targetRoom = "";
 
         dijkstraDistances = new double[numberOfNodes];
         estimatedTime = new TimeSpan(0, 0, 0);
@@ -454,8 +460,11 @@ public class DijkstraPathfinder
         distanceMatrix = new double[numberOfNodes,numberOfNodes];
         infoMatrix = new char[numberOfNodes,numberOfNodes];
 
-        startNode = 1; // get from user interface stuff
-        targetNode = 0; // get from user interface stuff
+        startNode = -1; // get from user interface stuff
+        targetNode = -1; // get from user interface stuff
+
+        startRoom = "";
+        targetRoom = "";
 
         dijkstraDistances = new double[numberOfNodes];
         estimatedTime = new TimeSpan(0, 0, 0);
@@ -649,8 +658,10 @@ public class DijkstraPathfinder
             for (int i = 0; i < numberOfNodes; i++) {
                 // add optimal edges to list
                 
+                // current dijkstra time - time to node =? dijkstra time to node
                 if (Math.Round(dijkstraDistances[currentNodeIndex] - attachedEdges[i], 1) == dijkstraDistances[i]) {
-                    if (!dijkstraPath.Contains(nodesForMatrix[i])){ // fix issue here with i should lookup node id
+                    // if dijkstra path doesnt contain the node and check that the node is connected by an edge..
+                    if (!dijkstraPath.Contains(nodesForMatrix[i]) && attachedEdges[i] != 0){ 
                         possibleNodes.Add(i);
                     }
                 }
@@ -836,8 +847,8 @@ public class DijkstraPathfinder
         int targetRoomNumNodes = possibleNodes[1].Count;
 
         // variables that will be returned
-        int startNode = -1;
-        int targetNode = -1;
+        startNode = -1;
+        targetNode = -1;
 
         if (startRoomNumNodes == 1 && targetRoomNumNodes == 1) {
             // if just one possible node for startRoom and targetRoom, choose them
@@ -1760,6 +1771,12 @@ internal class Program
             }
             Console.WriteLine();
         } 
+        dp.CarryOutAndInterpretDijkstras();
+        Console.WriteLine(dp.estimatedTime);
+        Console.WriteLine(dp.estimatedDistance);
+        for (int i = 0; i < dp.dijkstraPath.Count; i++) {
+            Console.Write(dp.dijkstraPath[i] + ", ");
+        }
         //FloydPathfinder fp = new FloydPathfinder();
 
         #region OldCode
