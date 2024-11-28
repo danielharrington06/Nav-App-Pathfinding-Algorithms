@@ -1390,10 +1390,10 @@ public class DijkstraPathfinder
             }
 
             // and then estimated distance
-            estimatedDistance = Convert.ToDouble(edgeRecord[3]) - (dist1 + dist2);
+            estimatedDistance = Math.Round(Convert.ToDouble(edgeRecord[3]) - (dist1 + dist2), 1);
 
             // find estimated time in secs
-            estimatedTimeInSecs = mb.EstimateTimeFromDistance(estimatedDistance, Convert.ToChar(edgeRecord[5]), mb.NearCongestionTime() && mb.useTimeOfDayForCalculation);
+            estimatedTimeInSecs = mb.EstimateTimeFromDistance(estimatedDistance, Convert.ToChar(edgeRecord[4]), mb.NearCongestionTime() && mb.useTimeOfDayForCalculation);
 
             // and then other time things
             estimatedTime = ConvertSecsToTimeFormat(estimatedTimeInSecs);
@@ -1409,10 +1409,10 @@ public class DijkstraPathfinder
                     floor0Path.Add([Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])]); // s room door
                     double[] sCoordinates = db.GetRoomEdgeInfoForIntersection(startRoom);
                     var (SxIntercept, SyIntercept) = db.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
-                    floor0Path.Add([SxIntercept, SyIntercept]); // s intersection
-                    double[] tCoordinates = db.GetRoomEdgeInfoForIntersection(startRoom);
+                    floor0Path.Add([Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)]); // s intersection
+                    double[] tCoordinates = db.GetRoomEdgeInfoForIntersection(targetRoom);
                     var (TxIntercept, TyIntercept) = db.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
-                    floor0Path.Add([TxIntercept, TyIntercept]); // t intersection
+                    floor0Path.Add([Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)]); // t intersection
                     floor0Path.Add([Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])]); // t room door
                 }
                 else if (db.GetRoomFloor(startRoom) == 1) {
@@ -1421,10 +1421,10 @@ public class DijkstraPathfinder
                     floor1Path.Add([Convert.ToDouble(sRoomRecord[4]), Convert.ToDouble(sRoomRecord[5])]); // s room door
                     double[] sCoordinates = db.GetRoomEdgeInfoForIntersection(startRoom);
                     var (SxIntercept, SyIntercept) = db.CalcIntersectionOfEdgeAndRoomConnector(sCoordinates[0], sCoordinates[1], sCoordinates[2], sCoordinates[3], sCoordinates[4], sCoordinates[5], sCoordinates[6]);
-                    floor1Path.Add([SxIntercept, SyIntercept]); // s intersection
-                    double[] tCoordinates = db.GetRoomEdgeInfoForIntersection(startRoom);
+                    floor1Path.Add([Math.Round(SxIntercept, 3), Math.Round(SyIntercept, 3)]); // s intersection
+                    double[] tCoordinates = db.GetRoomEdgeInfoForIntersection(targetRoom);
                     var (TxIntercept, TyIntercept) = db.CalcIntersectionOfEdgeAndRoomConnector(tCoordinates[0], tCoordinates[1], sCoordinates[2], tCoordinates[3], tCoordinates[4], tCoordinates[5], tCoordinates[6]);
-                    floor1Path.Add([TxIntercept, TyIntercept]); // t intersection
+                    floor1Path.Add([Math.Round(TxIntercept, 3), Math.Round(TyIntercept, 3)]); // t intersection
                     floor1Path.Add([Convert.ToDouble(tRoomRecord[4]), Convert.ToDouble(tRoomRecord[5])]); // t room door
                 }
 
@@ -2319,8 +2319,8 @@ internal class Program
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
 
-        string startRoom = "MH";
-        string targetRoom = "SH";
+        string startRoom = "S6";
+        string targetRoom = "S7";
 
         dp.CarryOutAndInterpretPathfinding(startRoom, targetRoom);
         dp.ShowPathfindingResults();
