@@ -1244,13 +1244,72 @@ public class DijkstraPathfinder
                 //check which floor
                 if (db.GetNodeFloor(dijkstraPath[i]) == 0) {
                     // ground floor
-                    // add room door
                     floor0Path.Add(db.GetNodeCoordinates(dijkstraPath[i])); // node 
+                    
+                    // now need to check for any edge vertices from this node to the one after and get them in the correct order
+                    if (i != dijkstraPath.Count -1) { // so dijksta path i + 1 can be taken
+                        if (db.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]) == -1) {
+                            // no edge vertices exist, so move on
+                        }
+                        else {
+                            // get edge id so can get edge vertices
+                            int edgeID = db.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]);
+                            List<double[]> edgeVertices = db.GetEdgeVertices(edgeID, dijkstraPath[i]);
+                            // add them to current floor path
+                            for (int j = 0; j < edgeVertices.Count; j++) {
+                                floor0Path.Add([edgeVertices[j][0], edgeVertices[j][1]]);
+                            }
+
+                            // if the node after is on the other floor, add the edge vertices to this floor too
+                            if (db.GetNodeFloor(dijkstraPath[i+1]) == 1) {
+                                // add the current node to other floor
+                                floor1Path.Add(db.GetNodeCoordinates(dijkstraPath[i]));
+
+                                //add the edge vertices to the other floor too
+                                for (int j = 0; j < edgeVertices.Count; j++) {
+                                    floor1Path.Add([edgeVertices[j][0], edgeVertices[j][1]]);
+                                }
+
+                                // and add the next node to this floor
+                                floor0Path.Add(db.GetNodeCoordinates(dijkstraPath[i+1]));
+                            }
+                        }
+                    }
+
                 }
                 else if (db.GetNodeFloor(dijkstraPath[i]) == 1) {
                     // first floor
-                    // add room door
                     floor1Path.Add(db.GetNodeCoordinates(dijkstraPath[i])); // node
+                    
+                    // now need to check for any edge vertices from this node to the one after and get them in the correct order
+                    if (i != dijkstraPath.Count -1) { // so dijksta path i + 1 can be taken
+                        if (db.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]) == -1) {
+                            // no edge vertices exist, so move on
+                        }
+                        else {
+                            // get edge id so can get edge vertices
+                            int edgeID = db.GetEdgeIfEdgeVerticesExist(dijkstraPath[i], dijkstraPath[i+1]);
+                            List<double[]> edgeVertices = db.GetEdgeVertices(edgeID, dijkstraPath[i]);
+                            // add them to current floor path
+                            for (int j = 0; j < edgeVertices.Count; j++) {
+                                floor1Path.Add([edgeVertices[j][0], edgeVertices[j][1]]);
+                            }
+    
+                            // if the node after is on the other floor, add the edge vertices to this floor too
+                            if (db.GetNodeFloor(dijkstraPath[i+1]) == 1) {
+                                // add the current node to other floor
+                                floor0Path.Add(db.GetNodeCoordinates(dijkstraPath[i]));
+    
+                                //add the edge vertices to the other floor too
+                                for (int j = 0; j < edgeVertices.Count; j++) {
+                                    floor0Path.Add([edgeVertices[j][0], edgeVertices[j][1]]);
+                                }
+    
+                                // and add the next node to this floor
+                                floor1Path.Add(db.GetNodeCoordinates(dijkstraPath[i+1]));
+                            }
+                        }
+                    }
                 }
             }
 
@@ -1690,10 +1749,18 @@ public class DatabaseHelper
             // create mysql command
             MySqlCommand command = new MySqlCommand(query, connection);
             // execute scalar will only return one value
-            scalarValue = double.Parse(command.ExecuteScalar()+"");
-            // close connection
+            
+            try {
+                scalarValue = double.Parse(command.ExecuteScalar()+"");
+            }
+            catch (FormatException ex){
+                Console.WriteLine(command.ExecuteScalar());
+                scalarValue = -1;
+            }
+            finally {
+                // close connection
             CloseConnection();
-
+            }
         }
 
         return scalarValue;
@@ -2180,7 +2247,7 @@ public class DatabaseHelper
     */
     public double[] GetNodeCoordinates(int node_id) {
         var(nodeFields, nodeValues) = ExecuteSelect("select x_coordinate, y_coordinate from tblnode where node_id = \"" + node_id + "\"");
-        return new double[] {Convert.ToDouble(nodeValues[0][0]), Convert.ToDouble(nodeValues[0][1])};
+        return new double[] {Math.Round(Convert.ToDouble(nodeValues[0][0]), 2), Math.Round(Convert.ToDouble(nodeValues[0][1]), 2)};
     }
     
     /**
@@ -2199,6 +2266,47 @@ public class DatabaseHelper
         result[6] = Convert.ToDouble(roomEdgeValues[0][6]);
 
         return result;
+    }
+
+    /**
+    This function uses SQL to return the edge id if the given nodes have an edge that exists in tblEdgeVertex.
+    It returns -1 if no edge is found.
+    */
+    public int GetEdgeIfEdgeVerticesExist(int node_1_id, int node_2_id) {
+
+        // query db
+        return Convert.ToInt32(ExecuteScalarSelect("select distinct tblEdge.edge_id  from tblEdge inner join tblEdgeVertex on tblEdge.edge_id = tblEdgeVertex.edge_id where (node_1_id = " + node_1_id + " and node_2_id = " + node_2_id + ") or (node_1_id = " + node_2_id + " and node_2_id = " + node_1_id + ")"));
+
+    }
+
+    /**
+    This function gets all the edge vertices for a given edge and startnode, ordering them appropriately
+    */
+    public List<double[]> GetEdgeVertices(int edge_id, int node_id) {
+
+        string[] edgeRecord = GetEdgeRecord(edge_id);
+        //query db for edge vertices for the edge
+        // if the first specified node is the start node, the order will be correct in tbledgevertex, so ascending
+        // otherwise, use descending coordinateValues;
+        if (Convert.ToInt32(edgeRecord[1]) == node_id) {
+            // can use ascending order of "vertex_order"
+            var (coordinateFields, coordinateValues) = ExecuteSelect("select tblEdgeVertex.x_coordinate, tblEdgeVertex.y_coordinate from tbledgeVertex inner join tblEdge on tblEdge.edge_id = tblEdgeVertex.edge_id where tblEdge.edge_id = 143 order by vertex_order asc");
+            List<double[]> coordinates = new List<double[]>();
+            for (int i = 0; i < coordinateValues.Count; i++) {
+                coordinates.Add(new double[2] {Convert.ToDouble(coordinateValues[i][0]), Convert.ToDouble(coordinateValues[i][1])});
+            }
+            return coordinates;
+        }
+        else {
+            // can use descending order of "vertex_order"
+            var (coordinateFields, coordinateValues) = ExecuteSelect("select tblEdgeVertex.x_coordinate, tblEdgeVertex.y_coordinate from tbledgeVertex inner join tblEdge on tblEdge.edge_id = tblEdgeVertex.edge_id where tblEdge.edge_id = 143 order by vertex_order desc");
+            List<double[]> coordinates = new List<double[]>();
+            for (int i = 0; i < coordinateValues.Count; i++) {
+                coordinates.Add(new double[2] {Convert.ToDouble(coordinateValues[i][0]), Convert.ToDouble(coordinateValues[i][1])});
+            }
+            return coordinates;
+        }
+        // had to rewrite code as vs code wasn't convinced that coordinateValues would exist otherwise
     }
 
 }
