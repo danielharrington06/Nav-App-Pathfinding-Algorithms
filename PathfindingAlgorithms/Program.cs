@@ -1,16 +1,5 @@
-﻿using System.ComponentModel;
-using System.Data.Common;
-using System.Globalization;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using Google.Protobuf.WellKnownTypes;
-using MySql.Data.MySqlClient;
-using MySql.Data.MySqlClient.Authentication;// include MySQL package
+﻿using MySql.Data.MySqlClient;
 using System.Diagnostics;
-using Org.BouncyCastle.Math.EC;
-using System;
-using System.Text.RegularExpressions;
-using ZstdSharp.Unsafe;
 
 
 public class MatrixBuilder
@@ -89,9 +78,6 @@ public class MatrixBuilder
         timeMatrixDefault = new double[numberOfNodes, numberOfNodes];
 
         timeMatrixStairsLifts = new double[numberOfNodes, numberOfNodes];
-
-        // now setup matrices
-        BuildMatricesForPathfinding();
     }
 
 
@@ -2311,8 +2297,8 @@ internal class Program
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
 
-        string startRoom = "S6";
-        string targetRoom = "S7";
+        string startRoom = "S7";
+        string targetRoom = "S6";
 
         dp.CarryOutAndInterpretPathfinding(startRoom, targetRoom);
         dp.ShowPathfindingResults();
