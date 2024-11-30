@@ -2297,8 +2297,8 @@ internal class Program
         mb.BuildMatricesForPathfinding();
         DijkstraPathfinder dp = new DijkstraPathfinder(mb);
 
-        string startRoom = "S7";
-        string targetRoom = "S6";
+        string startRoom = "G7";
+        string targetRoom = "S7";
 
         dp.CarryOutAndInterpretPathfinding(startRoom, targetRoom);
         dp.ShowPathfindingResults();
